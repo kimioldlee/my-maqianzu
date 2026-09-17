@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/32320909/README.md)
 # 马督工（马前卒）思维操作系统
 
 > 以《睡前消息》文字稿为主、知乎同类事件回答为补充的观点检索与分析框架。
@@ -76,6 +75,7 @@
 | `06-timeline.md` | 完整时间线（1981 至今） |
 | `14-zhihu-answers.md` | 知乎账号边界与相似事件补充观点 |
 | `15-transcript-framework.md` | 文字稿检索规则、节目方法论与跨期观点索引 |
+| `16-coverage-matrix.md` | 合理终点定义、主题覆盖矩阵与检索回归场景 |
 
 > 文字稿目录核验截至 2026 年 9 月 16 日，覆盖到第1075期。所有现实数据仍需在使用时核验。
 
@@ -87,13 +87,13 @@
 
 ```bash
 # 方式一：npx（最简，无需 git）
-npx degit wsssnmsg/madugong-perspective-skill madugong-perspective
+npx degit kimioldlee/my-maqianzu madugong-perspective
 
 # 方式二：git clone
-git clone https://github.com/wsssnmsg/madugong-perspective-skill.git
+git clone https://github.com/kimioldlee/my-maqianzu.git
 
 # 方式三：下载 ZIP
-curl -LO https://github.com/wsssnmsg/madugong-perspective-skill/archive/refs/heads/main.zip
+curl -LO https://github.com/kimioldlee/my-maqianzu/archive/refs/heads/main.zip
 ```
 
 ### 注入到 AI Agent
@@ -126,31 +126,31 @@ curl -LO https://github.com/wsssnmsg/madugong-perspective-skill/archive/refs/hea
 ## 📂 仓库结构
 
 ```
-madugong-perspective-skill/
-├── README.md                    # 本文件
-├── SKILL.md                     # 核心检索与分析规则
-├── SOUL.md                      # 兼容摘要
-├── LICENSE                      # MIT
-├── references/
-│   └── research/                # 完整调研资料
-│       ├── 01-writings.md
-│       ├── 02-conversations.md
-│       ├── 03-expression-dna.md
-│       ├── 04-external-views.md
-│       ├── 05-decisions.md
-│       ├── 06-timeline.md
-│       ├── 07-episodes-001-110.md
-│       ├── 08-episodes-101-200.md
-│       ├── 09-episodes-201-400.md
-│       ├── 10-episodes-401-600.md
-│       ├── 12-episodes-601-900.md
-│       ├── 13-episodes-901-1100.md
-│       ├── 14-zhihu-answers.md
-│       └── 15-transcript-framework.md
-├── examples/
-│   └── usage-examples.md        # 使用示例
-└── scripts/
-    └── install.sh               # 可选安装脚本
+README.md                        # 本文件
+SKILL.md                         # 核心检索与分析规则
+SOUL.md                          # 兼容摘要
+LICENSE                          # MIT
+references/
+└── research/                    # 完整调研资料
+    ├── 01-writings.md
+    ├── 02-conversations.md
+    ├── 03-expression-dna.md
+    ├── 04-external-views.md
+    ├── 05-decisions.md
+    ├── 06-timeline.md
+    ├── 07-episodes-001-110.md
+    ├── 08-episodes-101-200.md
+    ├── 09-episodes-201-400.md
+    ├── 10-episodes-401-600.md
+    ├── 12-episodes-601-900.md
+    ├── 13-episodes-901-1100.md
+    ├── 14-zhihu-answers.md
+    ├── 15-transcript-framework.md
+    └── 16-coverage-matrix.md
+examples/
+└── usage-examples.md            # 使用示例
+scripts/
+└── install.sh                   # 可选安装脚本
 ```
 
 ---

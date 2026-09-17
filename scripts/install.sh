@@ -1,7 +1,7 @@
 #!/bin/bash
 # 马督工思维操作系统 — 安装脚本
 # Usage:
-#   npx degit wsssnmsg/madugong-perspective-skill madugong-perspective
+#   npx degit kimioldlee/my-maqianzu madugong-perspective
 #   cd madugong-perspective
 #   bash scripts/install.sh
 
