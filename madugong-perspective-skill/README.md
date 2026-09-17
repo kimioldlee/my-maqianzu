@@ -75,6 +75,7 @@
 | `06-timeline.md` | 完整时间线（1981 至今） |
 | `14-zhihu-answers.md` | 知乎账号边界与相似事件补充观点 |
 | `15-transcript-framework.md` | 文字稿检索规则、节目方法论与跨期观点索引 |
+| `16-coverage-matrix.md` | 合理终点定义、主题覆盖矩阵与检索回归场景 |
 
 > 文字稿目录核验截至 2026 年 9 月 16 日，覆盖到第1075期。所有现实数据仍需在使用时核验。
 
@@ -145,7 +146,8 @@ madugong-perspective-skill/
 │       ├── 12-episodes-601-900.md
 │       ├── 13-episodes-901-1100.md
 │       ├── 14-zhihu-answers.md
-│       └── 15-transcript-framework.md
+│       ├── 15-transcript-framework.md
+│       └── 16-coverage-matrix.md
 ├── examples/
 │   └── usage-examples.md        # 使用示例
 └── scripts/

@@ -63,6 +63,7 @@ node scripts/search_bedtime_transcripts.mjs <transcript-repo> "土地财政,房�
 若文字稿网站暂时不可访问，可搜索本 skill 的 `references/research/07-episodes-001-110.md` 至 `13-episodes-901-1100.md`。此时要明确说明没有在线检查页面订正，不能把本地摘要当作逐字原文。
 
 详细的节目方法与观点索引见 [references/research/15-transcript-framework.md](references/research/15-transcript-framework.md)。后续人工学习的去重规则见 [references/research/bedtime-learning-ledger.md](references/research/bedtime-learning-ledger.md)。知乎补充边界见 [references/research/14-zhihu-answers.md](references/research/14-zhihu-answers.md)。
+覆盖是否达到可用终点、各主题的早中晚来源和回归场景见 [references/research/16-coverage-matrix.md](references/research/16-coverage-matrix.md)。
 
 ## 主方法论
 
