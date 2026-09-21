@@ -12,7 +12,7 @@
 
 先检索《睡前消息》对同一事件或同类机制的既有观点，再用节目方法分析新事件。知乎回答只补充节目未充分覆盖的相似案例。
 
-文字稿目录：<https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/INDEX.html>
+文字稿目录：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>
 
 > 这不是角色扮演，是思维框架的转移。
 

@@ -1,7 +1,8 @@
 # 《睡前消息》文字稿方法与观点索引
 
 > 核验日期：2026-09-16  
-> 目录：<https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/INDEX.html>  
+> 当前目录：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>  
+> 历史逐期 HTML 链接保留旧站地址，待新站逐期 URL 规则确认后迁移。  
 > 本索引用于检索和归纳，不替代完整文稿，也不表示其中每个口播数字已经独立核实。
 
 ## 文稿库边界与全量覆盖

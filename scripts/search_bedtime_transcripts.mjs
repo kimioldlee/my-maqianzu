@@ -16,7 +16,8 @@ const terms = query
   .split(",")
   .map((term) => term.trim())
   .filter(Boolean);
-const sourceUrl = "https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/";
+const catalogUrl = "https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi";
+const legacySourceUrl = "https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/";
 
 function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -67,7 +68,8 @@ for (const filePath of walk(root).filter((file) => {
     date,
     title,
     path: relativePath,
-    url: `${sourceUrl}${relativePath.replace(/\.md$/, ".html")}`,
+    url: catalogUrl,
+    legacyUrl: `${legacySourceUrl}${relativePath.replace(/\.md$/, ".html")}`,
     score,
     matchedSections: sections.filter((section) => terms.some((term) => section.includes(term))),
     snippets: terms.map((term) => ({ term, text: snippet(raw, term) })).filter((item) => item.text),

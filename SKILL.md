@@ -46,7 +46,9 @@ node scripts/search_bedtime_transcripts.mjs <transcript-repo> "土地财政,房�
 5. **节目组知乎账号内容**：只作为节目组材料，不自动归为任冲昊个人原话。
 6. **外部一手数据和权威资料**：核验当前事实，不用于假造马前卒立场。
 
-搜索入口：<https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/INDEX.html>
+搜索入口：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>
+
+这是当前频道入口。旧站的逐期 HTML 链接仍保留在研究索引中，作为可回读的历史链接；新站的逐期 URL 规则确认后再统一迁移。
 
 ## 检索流程
 
