@@ -12,7 +12,7 @@
 
 先检索《睡前消息》对同一事件或同类机制的既有观点，再用节目方法分析新事件。知乎回答只补充节目未充分覆盖的相似案例。
 
-文字稿目录：<https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/INDEX.html>
+文字稿目录：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>
 
 > 这不是角色扮演，是思维框架的转移。
 
@@ -126,31 +126,32 @@ curl -LO https://github.com/kimioldlee/my-maqianzu/archive/refs/heads/main.zip
 ## 📂 仓库结构
 
 ```
-README.md                        # 本文件
-SKILL.md                         # 核心检索与分析规则
-SOUL.md                          # 兼容摘要
-LICENSE                          # MIT
-references/
-└── research/                    # 完整调研资料
-    ├── 01-writings.md
-    ├── 02-conversations.md
-    ├── 03-expression-dna.md
-    ├── 04-external-views.md
-    ├── 05-decisions.md
-    ├── 06-timeline.md
-    ├── 07-episodes-001-110.md
-    ├── 08-episodes-101-200.md
-    ├── 09-episodes-201-400.md
-    ├── 10-episodes-401-600.md
-    ├── 12-episodes-601-900.md
-    ├── 13-episodes-901-1100.md
-    ├── 14-zhihu-answers.md
-    ├── 15-transcript-framework.md
-    └── 16-coverage-matrix.md
-examples/
-└── usage-examples.md            # 使用示例
-scripts/
-└── install.sh                   # 可选安装脚本
+madugong-perspective-skill/
+├── README.md                    # 本文件
+├── SKILL.md                     # 核心检索与分析规则
+├── SOUL.md                      # 兼容摘要
+├── LICENSE                      # MIT
+├── references/
+│   └── research/                # 完整调研资料
+│       ├── 01-writings.md
+│       ├── 02-conversations.md
+│       ├── 03-expression-dna.md
+│       ├── 04-external-views.md
+│       ├── 05-decisions.md
+│       ├── 06-timeline.md
+│       ├── 07-episodes-001-110.md
+│       ├── 08-episodes-101-200.md
+│       ├── 09-episodes-201-400.md
+│       ├── 10-episodes-401-600.md
+│       ├── 12-episodes-601-900.md
+│       ├── 13-episodes-901-1100.md
+│       ├── 14-zhihu-answers.md
+│       ├── 15-transcript-framework.md
+│       └── 16-coverage-matrix.md
+├── examples/
+│   └── usage-examples.md        # 使用示例
+└── scripts/
+    └── install.sh               # 可选安装脚本
 ```
 
 ---

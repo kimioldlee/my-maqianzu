@@ -12,7 +12,8 @@ if (!repoRoot || !outputPath) {
 }
 
 const transcriptRoot = path.join(repoRoot, "contents", "ShuiQianXiaoXi");
-const sourceUrl = "https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/";
+const catalogUrl = "https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi";
+const legacySourceUrl = "https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/";
 const episodeName = /^\d{4}(?:\.\d+)?\.md$/;
 const topicLexicon = {
   fiscal: ["财政", "税收", "转移支付", "地方债", "城投", "预算", "债务"],
@@ -114,7 +115,8 @@ function parseArticle(filePath, kind = "episode") {
     date,
     title,
     path: relativePath,
-    url: `${sourceUrl}${relativePath.replace(/\.md$/, ".html")}`,
+    url: catalogUrl,
+    legacyUrl: `${legacySourceUrl}${relativePath.replace(/\.md$/, ".html")}`,
     sections: headings,
     opening: firstSentence(contentAfterHeading(body)),
     questions,
@@ -150,7 +152,8 @@ const index = {
   generatedAt: new Date().toISOString(),
   source: {
     repository: "https://github.com/BedtimeNewsStudio/BedtimeNews-Transcripts",
-    sourceUrl,
+    catalogUrl,
+    legacySourceUrl,
   },
   coverage: {
     highestEpisodeNumber: 1075,
