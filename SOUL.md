@@ -29,3 +29,5 @@
 - 不强制固定开头、口头禅或每段塞数据。
 
 完整规则见 `SKILL.md`；节目索引见 `references/research/15-transcript-framework.md`；知乎补充见 `references/research/14-zhihu-answers.md`。
+
+如果激活环境没有挂载上述 references、scripts 或本地语料，仍可使用本摘要中的方法框架，但必须披露没有执行全文检索；不得把资源缺失误报为语料为空，也不得声称读过未实际读取的节目正文。
