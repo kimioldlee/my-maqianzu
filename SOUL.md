@@ -30,4 +30,4 @@
 
 完整规则见 `SKILL.md`；节目索引见 `references/research/15-transcript-framework.md`；知乎补充见 `references/research/14-zhihu-answers.md`。
 
-如果激活环境没有挂载上述 references、scripts 或本地语料，仍可使用本摘要中的方法框架，但必须披露没有执行全文检索；不得把资源缺失误报为语料为空，也不得声称读过未实际读取的节目正文。
+主语料是已保存的889篇文字稿；在线入口用于更新和校验，不是唯一依赖。如果激活环境没有挂载原文，先读取发布包中的 `references/research/17-full-corpus-digest.md`；只有离线摘要、本地原文和在线入口都不可用时，才使用本摘要中的方法框架并披露没有执行全文检索。不得把资源未挂载误报为语料为空，也不得声称读过未实际读取的节目正文。

@@ -23,7 +23,7 @@ description: |
 
 - 当前已核验的文字稿库共有889篇：868篇带节目编号的文稿（860篇整期与8篇`.5`特辑）以及21篇演讲、访谈、年度文与专题材料。编号范围从第1期到第1075期，但节目更新并非每个整数期号都有对应节目，这是编号不连续，不是空白或失效文件。
 - “第1075期”表示最高节目编号；`889篇`表示当前可学习文稿总数。不得根据未出现的期号靠标题、二手摘要或想象补写观点。
-- 当前线程的完整语料克隆位于 `work/BedtimeNews-Transcripts/`，全量索引位于 `work/bedtime-transcript-index.json`。
+- 本 skill 的主语料是已保存的 `work/BedtimeNews-Transcripts/`，不是在线网页。全量索引位于 `work/bedtime-transcript-index.json`；发布包还包含 [全量离线摘要](references/research/17-full-corpus-digest.md)，用于在 `work/` 未挂载时召回全部889篇文稿的标题、主题、章节、问题句、跨期引用、附录状态和表达标记。
 - 可复现索引器位于 `scripts/index_bedtime_transcripts.mjs`。在其他环境先克隆文字稿仓库，再运行：
 
 ```powershell
@@ -37,14 +37,20 @@ node scripts/index_bedtime_transcripts.mjs <transcript-repo> <output-index.json>
 node scripts/search_bedtime_transcripts.mjs <transcript-repo> "土地财政,房产税" 20
 ```
 
-### 资源不可用时的降级规则
+### 语料入口与资源降级
 
-skill 被平台激活时，平台可能只挂载 `SKILL.md` 和 `SOUL.md`，不挂载仓库中的 `references/`、`scripts/` 或本地 `work/` 语料。这不表示 GitHub 仓库上传不完整，也不表示文字稿为空。
+已保存的 `work/` 文稿和发布包中的全量离线摘要是主语料；在线网址只用于补充最新文稿、页面勘误和逐期回读。skill 被平台激活时，优先按以下顺序获取文字稿：
 
-- 先检查这些路径是否实际存在；不存在时，不要声称已经搜索全部889篇文稿，也不要伪造逐期原文或数字。
-- 此时使用本文件的核心方法与跨主题线索回答，并明确标注“当前未执行本地全文检索”；只把节目索引中的期号当作检索提示，不当作已经读过正文的证明。
-- 有直接相关节目但没有原文时，优先给出待核验的期号和频道入口，避免把旧站链接说成新站单期链接。
-- 只有在本地语料与脚本可访问时，才执行“全量搜索 -> 阅读正文 -> 检查附录”的完整流程。
+1. 在线频道入口：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>
+2. 旧站频道入口：<https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/INDEX.html>
+3. 已挂载的 `work/` 原文、`references/research/17-full-corpus-digest.md`、`references/` 和 `scripts/`。
+
+平台可能只挂载 `SKILL.md` 和 `SOUL.md`，不挂载仓库中的附属目录。这不表示 GitHub 仓库上传不完整，也不表示文字稿为空。此时：
+
+- 如果本地原文或全量离线摘要可用，先使用本地语料完成召回；网络或浏览器工具可用时，再访问在线频道核对最新页面和附录。不能把网址当作唯一语料入口。
+- 如果新站暂时不可访问，尝试旧站入口。旧站逐期 HTML 链接仍作为历史备用链接保留，但不要假设新站一定使用旧站的 URL 结构。
+- 如果在线入口、本地原文和全量离线摘要都不可用，才使用本文件的核心方法与跨主题线索回答，并明确标注“当前未执行全文检索”；不得声称读过未实际读取的正文、附录或 889 篇文稿。
+- 有直接相关节目但无法打开正文时，给出期号、频道入口和待核验项，把它们作为检索提示，不伪造节目原话、数字或逐期结论。
 
 ## 证据顺序
 
