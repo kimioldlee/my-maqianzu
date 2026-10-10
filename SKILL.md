@@ -23,7 +23,7 @@ description: |
 
 - 当前已核验的文字稿库共有889篇：868篇带节目编号的文稿（860篇整期与8篇`.5`特辑）以及21篇演讲、访谈、年度文与专题材料。编号范围从第1期到第1075期，但节目更新并非每个整数期号都有对应节目，这是编号不连续，不是空白或失效文件。
 - “第1075期”表示最高节目编号；`889篇`表示当前可学习文稿总数。不得根据未出现的期号靠标题、二手摘要或想象补写观点。
-- 本 skill 的主语料是《睡前消息》文字稿。完整仓库安装时，原文位于 `work/BedtimeNews-Transcripts/`，全量索引位于 `bedtime-transcript-index.json`，发布包还包含 [全量离线摘要](references/research/17-full-corpus-digest.md)。摘要可在原文暂时不可见时召回全部889篇文稿的标题、主题、章节、问题句、跨期引用、附录状态和表达标记，但不能替代正文和附录。
+ - 本 skill 的主语料是《睡前消息》文字稿。完整仓库安装时，原文位于 `work/BedtimeNews-Transcripts/`，全量索引位于 `bedtime-transcript-index.json`，发布包还包含 [全量离线摘要](references/research/17-full-corpus-digest.md)。摘要可在原文暂时不可见时召回全部889篇文稿的标题、主题、章节、问题句、跨期引用、附录状态和表达标记，但不能替代正文和附录。
 - 可复现索引器位于 `scripts/index_bedtime_transcripts.mjs`。在其他环境先克隆文字稿仓库，再运行：
 
 ```powershell
