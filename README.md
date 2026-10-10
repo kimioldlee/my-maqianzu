@@ -86,12 +86,14 @@
 
 ### 获取文件
 
-```bash
-# 方式一：npx（最简，无需 git）
-npx degit kimioldlee/my-maqianzu madugong-perspective
+首次使用请获取整个仓库，而不是只打开或复制 `SKILL.md`。本技能的离线索引、889篇文稿摘要、检索脚本和文字稿原文都在仓库的附属路径中；某些平台仍可能只自动挂载 `SKILL.md` 和 `SOUL.md`，这时技能会按 `SKILL.md` 中的 Raw/在线降级规则运行。
 
-# 方式二：git clone
+```bash
+# 方式一：git clone（推荐）
 git clone https://github.com/kimioldlee/my-maqianzu.git
+
+# 方式二：npx（可能不保留大文件或目录，不推荐）
+npx degit kimioldlee/my-maqianzu madugong-perspective
 
 # 方式三：下载 ZIP
 curl -LO https://github.com/kimioldlee/my-maqianzu/archive/refs/heads/main.zip

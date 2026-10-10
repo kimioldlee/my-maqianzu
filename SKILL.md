@@ -23,7 +23,7 @@ description: |
 
 - 当前已核验的文字稿库共有889篇：868篇带节目编号的文稿（860篇整期与8篇`.5`特辑）以及21篇演讲、访谈、年度文与专题材料。编号范围从第1期到第1075期，但节目更新并非每个整数期号都有对应节目，这是编号不连续，不是空白或失效文件。
 - “第1075期”表示最高节目编号；`889篇`表示当前可学习文稿总数。不得根据未出现的期号靠标题、二手摘要或想象补写观点。
-- 本 skill 的主语料是已保存的 `work/BedtimeNews-Transcripts/`，不是在线网页。全量索引位于 `work/bedtime-transcript-index.json`；发布包还包含 [全量离线摘要](references/research/17-full-corpus-digest.md)，用于在 `work/` 未挂载时召回全部889篇文稿的标题、主题、章节、问题句、跨期引用、附录状态和表达标记。
+- 本 skill 的主语料是《睡前消息》文字稿。完整仓库安装时，原文位于 `work/BedtimeNews-Transcripts/`，全量索引位于 `bedtime-transcript-index.json`，发布包还包含 [全量离线摘要](references/research/17-full-corpus-digest.md)。摘要可在原文暂时不可见时召回全部889篇文稿的标题、主题、章节、问题句、跨期引用、附录状态和表达标记，但不能替代正文和附录。
 - 可复现索引器位于 `scripts/index_bedtime_transcripts.mjs`。在其他环境先克隆文字稿仓库，再运行：
 
 ```powershell
@@ -39,18 +39,28 @@ node scripts/search_bedtime_transcripts.mjs <transcript-repo> "土地财政,房�
 
 ### 语料入口与资源降级
 
-已保存的 `work/` 文稿和发布包中的全量离线摘要是主语料；在线网址只用于补充最新文稿、页面勘误和逐期回读。skill 被平台激活时，优先按以下顺序获取文字稿：
+先判断资源是否**实际可读**，不要因为仓库里存在路径就声称已经检索。完整安装和仅挂载核心文件是两种不同运行模式：
 
-1. 在线频道入口：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>
-2. 旧站频道入口：<https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/INDEX.html>
-3. 已挂载的 `work/` 原文、`references/research/17-full-corpus-digest.md`、`references/` 和 `scripts/`。
+**A. 完整仓库模式（首选）**
 
-平台可能只挂载 `SKILL.md` 和 `SOUL.md`，不挂载仓库中的附属目录。这不表示 GitHub 仓库上传不完整，也不表示文字稿为空。此时：
+从仓库根目录加载 `bedtime-transcript-index.json` 和 `references/research/17-full-corpus-digest.md`；若需要正文，再读取 `work/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/`。检索脚本在 `scripts/`。本 skill 对应的公开仓库入口是：
 
-- 如果本地原文或全量离线摘要可用，先使用本地语料完成召回；网络或浏览器工具可用时，再访问在线频道核对最新页面和附录。不能把网址当作唯一语料入口。
-- 如果新站暂时不可访问，尝试旧站入口。旧站逐期 HTML 链接仍作为历史备用链接保留，但不要假设新站一定使用旧站的 URL 结构。
-- 如果在线入口、本地原文和全量离线摘要都不可用，才使用本文件的核心方法与跨主题线索回答，并明确标注“当前未执行全文检索”；不得声称读过未实际读取的正文、附录或 889 篇文稿。
-- 有直接相关节目但无法打开正文时，给出期号、频道入口和待核验项，把它们作为检索提示，不伪造节目原话、数字或逐期结论。
+<https://github.com/kimioldlee/my-maqianzu/tree/main>
+
+不能只下载 `SKILL.md` 后假定这些附属目录仍然可见。完整安装时，工作目录应保持 `SKILL.md`、`scripts/`、`references/`、`bedtime-transcript-index.json` 和 `work/` 的相对关系。
+
+**B. 核心文件模式（平台只挂载 `SKILL.md`/`SOUL.md`）**
+
+平台可能只挂载核心文件。这不表示 GitHub 仓库上传不完整，也不表示文字稿为空；它表示本次运行没有本地全文库。若有网络/浏览器工具，按以下顺序访问：
+
+1. 全量离线摘要 Raw 文件：<https://raw.githubusercontent.com/kimioldlee/my-maqianzu/main/references/research/17-full-corpus-digest.md>
+2. 全量索引 Raw 文件：<https://raw.githubusercontent.com/kimioldlee/my-maqianzu/main/bedtime-transcript-index.json>
+3. 新在线频道：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>
+4. 旧站频道：<https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/INDEX.html>
+
+摘要/索引可用于定位候选期数；必须能打开对应正文时，才把内容称为“节目原文依据”。如果 Raw、在线入口和本地原文都不可访问，使用本文件的方法论与已写入的跨主题线索回答，并明确标注“当前未执行全文检索”；不得声称读过未实际读取的正文、附录或889篇文稿。若只能看到摘要，应明确写“依据离线摘要定位，未回读正文”。
+
+资源优先级不是“永远先在线”：以当前实际可读者为准。完整仓库模式优先本地索引/原文，在线页面用于勘误和时效更新；核心文件模式优先 Raw 摘要/索引，再尝试两个在线入口。
 
 ## 证据顺序
 
