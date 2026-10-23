@@ -15,7 +15,8 @@ description: |
 - 同一议题有多期节目时，优先使用日期更晚、信息更完整的节目，并交代观点变化。
 - 文字稿按口播整理，页面还可能列出“事实订正、已核对、待核对”。它适合确认节目表达，不等于其中每个数字都已得到独立验证。
 - 现实数据、政策现状和人物事件必须另行核验；不要把旧节目数据当作当前事实。
-- 知乎回答只作补充，不单独定义本 skill 的核心模型、固定文体或人物立场。
+- 知乎回答通常只作补充，不单独定义本 skill 的核心模型、固定文体或人物立场；“停更期的当下热点直答”适用下述例外。
+- `马前卒official` 是“睡前消息节目组专用号”。除非回答另有个人署名证据，引用时写“该官方账号的回答”，不写成任冲昊个人原话、个人现时立场或节目正式结论。
 
 ## 全量语料要求
 
@@ -23,7 +24,8 @@ description: |
 
 - 当前已核验的文字稿库共有889篇：868篇带节目编号的文稿（860篇整期与8篇`.5`特辑）以及21篇演讲、访谈、年度文与专题材料。编号范围从第1期到第1075期，但节目更新并非每个整数期号都有对应节目，这是编号不连续，不是空白或失效文件。
 - “第1075期”表示最高节目编号；`889篇`表示当前可学习文稿总数。不得根据未出现的期号靠标题、二手摘要或想象补写观点。
- - 本 skill 的主语料是《睡前消息》文字稿。完整仓库安装时，原文位于 `work/BedtimeNews-Transcripts/`，全量索引位于 `bedtime-transcript-index.json`，发布包还包含 [全量离线摘要](references/research/17-full-corpus-digest.md)。摘要可在原文暂时不可见时召回全部889篇文稿的标题、主题、章节、问题句、跨期引用、附录状态和表达标记，但不能替代正文和附录。
+- 本 skill 的主语料是《睡前消息》文字稿。完整仓库安装时，原文位于 `work/BedtimeNews-Transcripts/`，全量索引位于 `bedtime-transcript-index.json`，发布包还包含 [全量离线摘要](references/research/17-full-corpus-digest.md)。摘要可在原文暂时不可见时召回全部889篇文稿的标题、主题、章节、问题句、跨期引用、附录状态和表达标记，但不能替代正文和附录。
+- 完整仓库另含 2029 篇 `马前卒official` 知乎回答，覆盖 2020-01-24 至 2026-10-22。正文在 `work/ZhihuOfficial-Answers/answers/`，规范索引在 `work/ZhihuOfficial-Answers/zhihu-official-answer-index.json`，原始 HTML 备份在 `work/ZhihuOfficial-Answers/zhihu-answers-raw.jsonl`。它是二级补充库，不计入889篇节目文字稿，也不参与节目期号或观点覆盖统计。
 - 可复现索引器位于 `scripts/index_bedtime_transcripts.mjs`。在其他环境先克隆文字稿仓库，再运行：
 
 ```powershell
@@ -37,13 +39,19 @@ node scripts/index_bedtime_transcripts.mjs <transcript-repo> <output-index.json>
 node scripts/search_bedtime_transcripts.mjs <transcript-repo> "土地财政,房产税" 20
 ```
 
+- 知乎补充库的规范索引器是 `scripts/index_zhihu_official_answers.mjs`，全文检索器是 `scripts/search_zhihu_official_answers.mjs`。仅在节目材料不足时使用：
+
+```powershell
+node scripts/search_zhihu_official_answers.mjs work/ZhihuOfficial-Answers "生育,化工" 20
+```
+
 ### 语料入口与资源降级
 
 先判断资源是否**实际可读**，不要因为仓库里存在路径就声称已经检索。完整安装和仅挂载核心文件是两种不同运行模式：
 
 **A. 完整仓库模式（首选）**
 
-从仓库根目录加载 `bedtime-transcript-index.json` 和 `references/research/17-full-corpus-digest.md`；若需要正文，再读取 `work/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/`。检索脚本在 `scripts/`。本 skill 对应的公开仓库入口是：
+从仓库根目录加载 `bedtime-transcript-index.json` 和 `references/research/17-full-corpus-digest.md`；若需要正文，再读取 `work/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/`。只有节目检索未给出直接材料时，才读取 `work/ZhihuOfficial-Answers/zhihu-official-answer-index.json` 和 `work/ZhihuOfficial-Answers/answers/`。检索脚本在 `scripts/`。本 skill 对应的公开仓库入口是：
 
 <https://github.com/kimioldlee/my-maqianzu/tree/main>
 
@@ -54,13 +62,14 @@ node scripts/search_bedtime_transcripts.mjs <transcript-repo> "土地财政,房�
 平台可能只挂载核心文件。这不表示 GitHub 仓库上传不完整，也不表示文字稿为空；它表示本次运行没有本地全文库。若有网络/浏览器工具，按以下顺序访问：
 
 1. 全量离线摘要 Raw 文件：<https://raw.githubusercontent.com/kimioldlee/my-maqianzu/main/references/research/17-full-corpus-digest.md>
-2. 全量索引 Raw 文件：<https://raw.githubusercontent.com/kimioldlee/my-maqianzu/main/bedtime-transcript-index.json>
+2. 全量节目索引 Raw 文件：<https://raw.githubusercontent.com/kimioldlee/my-maqianzu/main/bedtime-transcript-index.json>
 3. 新在线频道：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>
 4. 旧站频道：<https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/INDEX.html>
+5. 只有节目没有直接材料时，才读取知乎补充索引 Raw 文件：<https://raw.githubusercontent.com/kimioldlee/my-maqianzu/main/work/ZhihuOfficial-Answers/zhihu-official-answer-index.json>
 
-摘要/索引可用于定位候选期数；必须能打开对应正文时，才把内容称为“节目原文依据”。如果 Raw、在线入口和本地原文都不可访问，使用本文件的方法论与已写入的跨主题线索回答，并明确标注“当前未执行全文检索”；不得声称读过未实际读取的正文、附录或889篇文稿。若只能看到摘要，应明确写“依据离线摘要定位，未回读正文”。
+摘要/索引可用于定位候选期数；必须能打开对应正文时，才把内容称为“节目原文依据”或“官方账号补充”。如果节目 Raw、在线入口和本地原文都不可访问，使用本文件的方法论与已写入的跨主题线索回答，并明确标注“当前未执行全文检索”；不得声称读过未实际读取的正文、附录、889篇节目文稿或2029篇知乎回答。若只能看到摘要，应明确写“依据离线摘要定位，未回读正文”；若只能看到知乎索引，应明确写“依据知乎索引定位，未回读回答正文”。
 
-资源优先级不是“永远先在线”：以当前实际可读者为准。完整仓库模式优先本地索引/原文，在线页面用于勘误和时效更新；核心文件模式优先 Raw 摘要/索引，再尝试两个在线入口。
+资源优先级不是“永远先在线”：以当前实际可读者为准。完整仓库模式优先本地索引/原文，在线页面用于勘误和时效更新；核心文件模式优先 Raw 摘要/索引，再尝试两个在线入口。**仓库设为私有时，未认证会话不能可靠读取上述 GitHub Raw 链接**；此时必须以完整本地安装、已认证的 GitHub 工具或公开的节目网站为准，不能把 Raw URL 当作必然可访问的备用库。
 
 ## 证据顺序
 
@@ -68,9 +77,9 @@ node scripts/search_bedtime_transcripts.mjs <transcript-repo> "土地财政,房�
 2. **机制相似的节目文稿**：同样的财政结构、激励关系、产业约束或治理问题。
 3. **更晚的节目与回顾期**：检查原判断是否被修正、延伸或否定。
 4. **马前卒个人署名的知乎回答**：仅补充类似事件中的旧观点、短答或节目未展开的细节。
-5. **节目组知乎账号内容**：只作为节目组材料，不自动归为任冲昊个人原话。
-6. **外部一手数据和权威资料**：核验当前事实，不用于假造马前卒立场。
-
+5. **停更期的马前卒official 当下热点直答**：若节目已停更或未对该热点发布更晚的直接回应，且该官方账号在最后一期节目之后直接回答同一热点，则它优先于旧节目中的机制类比和旧知乎类比；仍只能标为“官方账号对当下事件的直接回应”，不自动归为任冲昊个人原话或节目正式结论。
+6. **马前卒official 节目组账号的相似事件回答**：不符合上一条的，才仅用于补充机制相似的具体论证、例子或表达；不自动归为任冲昊个人原话。
+7. **外部一手数据和权威资料**：核验当前事实，不用于假造马前卒立场。
 搜索入口：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>
 
 这是当前频道入口。旧站的逐期 HTML 链接仍保留在研究索引中，作为可回读的历史链接；新站的逐期 URL 规则确认后再统一迁移。
@@ -84,12 +93,13 @@ node scripts/search_bedtime_transcripts.mjs <transcript-repo> "土地财政,房�
 3. 至少读一篇直接相关文稿；重要议题再读一篇早期文稿、一篇后续文稿和一篇机制相似文稿。
 4. 阅读正文之外的“事实订正、已核对、待核对”，不要引用已被订正的数字。
 5. 记录期号、发布日期、标题、节目明确结论、成立条件和后续变化。
-6. 只有节目材料不足时，才查询知乎补充。知乎观点必须注明账号、日期和与当前事件的相似点。
-7. 输出时先回答当前问题，再说明哪些内容来自节目、哪些是类推。
+6. 若问题是节目停更后的当下热点，检查 `马前卒official` 是否在最后一期节目之后直接回答同一热点。若命中，先回读全文，标为“官方账号对当下事件的直接回应”；它优先于旧节目机制类比，但不替代当前事实核验，也不改写账号归属。
+7. 其他情况下，只有节目材料不足时才查询知乎补充。优先说明节目为何未直接覆盖，再检索相似机制。知乎观点必须注明账号、日期、链接和与当前事件的相似点；`马前卒official` 必须标为“官方账号补充”。
+8. 输出时先回答当前问题，再说明哪些内容来自节目、哪些是类推。
 
 若文字稿网站暂时不可访问，可搜索本 skill 的 `references/research/07-episodes-001-110.md` 至 `13-episodes-901-1100.md`。此时要明确说明没有在线检查页面订正，不能把本地摘要当作逐字原文。
 
-详细的节目方法与观点索引见 [references/research/15-transcript-framework.md](references/research/15-transcript-framework.md)。后续人工学习的去重规则见 [references/research/bedtime-learning-ledger.md](references/research/bedtime-learning-ledger.md)。知乎补充边界见 [references/research/14-zhihu-answers.md](references/research/14-zhihu-answers.md)。
+详细的节目方法与观点索引见 [references/research/15-transcript-framework.md](references/research/15-transcript-framework.md)。后续人工学习的去重规则见 [references/research/bedtime-learning-ledger.md](references/research/bedtime-learning-ledger.md)。知乎补充边界见 [references/research/14-zhihu-answers.md](references/research/14-zhihu-answers.md)，完整官方账号语料库的检索与归因规则见 [references/research/18-zhihu-official-corpus.md](references/research/18-zhihu-official-corpus.md)。
 覆盖是否达到可用终点、各主题的早中晚来源和回归场景见 [references/research/16-coverage-matrix.md](references/research/16-coverage-matrix.md)。
 
 ## 主方法论
@@ -196,7 +206,7 @@ node scripts/search_bedtime_transcripts.mjs <transcript-repo> "土地财政,房�
 2. **节目依据**：列出最相关期数和当时观点。
 3. **机制分析**：说明成本、激励、资源边界和二阶效应。
 4. **时效校正**：补充当前数据或说明旧观点的适用条件已变化。
-5. **归因标签**：明确哪些是节目原有观点，哪些是框架推演。
+5. **归因标签**：明确哪些是节目原有观点、官方账号对当下事件的直接回应、官方账号补充、框架推演或本助手判断。
 
 用户明确要求《睡前消息》稿件时，可采用“事件钩子 -> 背景资料 -> 矛盾双方 -> 成本与边界 -> 机制相似案例 -> 替代方案”的长结构。不要逐句模仿，不强制使用“这个问题的本质是”。
 
@@ -204,6 +214,8 @@ node scripts/search_bedtime_transcripts.mjs <transcript-repo> "土地财政,房�
 
 - 是否先查了直接相关文字稿，而不是凭印象套“工业党”标签？
 - 是否把知乎放在节目文稿之后？
+- 对停更后的热点，是否检查了最后一期节目之后有无 `马前卒official` 的直接回答，并将它与旧节目类比区分？
+- 是否把 `马前卒official` 明确标为节目组官方账号，避免无证据归为个人原话？
 - 是否给出真实期号、日期和链接？
 - 是否检查了文稿页面的订正与待核对项？
 - 是否区分节目明确观点和自己的类推？
@@ -214,6 +226,7 @@ node scripts/search_bedtime_transcripts.mjs <transcript-repo> "土地财政,房�
 ## 来源纪律
 
 - 文字稿库是第三方整理项目，文稿著作权归原权利人；只做检索、分析和短引，不大段复制。
+- 知乎回答的著作权归原作者或权利人；离线保存用于定位、复核与短引，不因纳入本项目而获得新的再发布许可。
 - 节目原始视频、官方文件和原始统计可用于交叉核验。
 - 搜索摘要、转载和评论只用于发现一手来源。
 - 无法核实的原话、数字和现实状态必须明确标注不确定性。

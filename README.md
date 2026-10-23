@@ -10,7 +10,7 @@
 
 ## 📖 简介
 
-先检索《睡前消息》对同一事件或同类机制的既有观点，再用节目方法分析新事件。知乎回答只补充节目未充分覆盖的相似案例。
+先检索《睡前消息》对同一事件或同类机制的既有观点，再用节目方法分析新事件。2029 篇 `马前卒official` 知乎回答只补充节目未充分覆盖的相似案例；该账号是节目组专用号，不自动等同于任冲昊个人原话。
 
 文字稿目录：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>
 
@@ -39,7 +39,9 @@
 1. 同一事件的《睡前消息》文字稿。
 2. 机制相似的节目及更晚回顾期。
 3. 个人署名知乎回答，仅补充相似事件观点。
-4. 当前一手数据，用于时效校正。
+4. 节目停更后的当下热点，`马前卒official` 对同一事件的直接回答优先于旧节目机制类比，但必须标为官方账号回应。
+5. 其他 `马前卒official` 节目组账号回答，仅在节目没有直接材料时补充相似机制。
+6. 当前一手数据，用于时效校正。
 
 ### 表达 DNA
 
@@ -77,6 +79,7 @@
 | `15-transcript-framework.md` | 文字稿检索规则、节目方法论与跨期观点索引 |
 | `16-coverage-matrix.md` | 合理终点定义、主题覆盖矩阵与检索回归场景 |
 | `17-full-corpus-digest.md` | 889篇文稿的离线召回摘要 |
+| `18-zhihu-official-corpus.md` | 2029篇官方账号回答的语料范围、检索和归因边界 |
 
 > 文字稿目录核验截至 2026 年 9 月 16 日，覆盖到第1075期。所有现实数据仍需在使用时核验。
 
@@ -86,7 +89,7 @@
 
 ### 获取文件
 
-首次使用请获取整个仓库，而不是只打开或复制 `SKILL.md`。本技能的离线索引、889篇文稿摘要、检索脚本和文字稿原文都在仓库的附属路径中；某些平台仍可能只自动挂载 `SKILL.md` 和 `SOUL.md`，这时技能会按 `SKILL.md` 中的 Raw/在线降级规则运行。
+首次使用请获取整个仓库，而不是只打开或复制 `SKILL.md`。本技能的离线索引、889篇节目文稿摘要、节目全文、2029篇知乎回答、检索脚本和原始 HTML 备份都在仓库的附属路径中；某些平台仍可能只自动挂载 `SKILL.md` 和 `SOUL.md`，这时技能会按 `SKILL.md` 中的 Raw/在线降级规则运行。
 
 ```bash
 # 方式一：git clone（推荐）
@@ -98,6 +101,8 @@ npx degit kimioldlee/my-maqianzu madugong-perspective
 # 方式三：下载 ZIP
 curl -LO https://github.com/kimioldlee/my-maqianzu/archive/refs/heads/main.zip
 ```
+
+仓库为私有时，`git clone`、下载 ZIP 和 GitHub Raw 都要求当前 GitHub 账号或访问令牌拥有该仓库权限。若 AI 平台只加载 `SKILL.md`，却没有挂载附属目录，也无法在未认证条件下用 Raw 链接读取私有语料；应将完整克隆目录作为本地项目打开。
 
 ### 注入到 AI Agent
 
@@ -134,6 +139,7 @@ madugong-perspective-skill/
 ├── SKILL.md                     # 核心检索与分析规则
 ├── SOUL.md                      # 兼容摘要
 ├── LICENSE                      # MIT
+├── bedtime-transcript-index.json # 889篇节目文稿的召回索引
 ├── references/
 │   └── research/                # 完整调研资料
 │       ├── 01-writings.md
@@ -150,10 +156,18 @@ madugong-perspective-skill/
 │       ├── 13-episodes-901-1100.md
 │       ├── 14-zhihu-answers.md
 │       ├── 15-transcript-framework.md
-│       └── 16-coverage-matrix.md
+│       ├── 16-coverage-matrix.md
+│       ├── 17-full-corpus-digest.md
+│       └── 18-zhihu-official-corpus.md
+├── work/
+│   ├── BedtimeNews-Transcripts/ # 889篇节目文稿正文
+│   └── ZhihuOfficial-Answers/   # 2029篇官方账号回答与原始 HTML
 ├── examples/
 │   └── usage-examples.md        # 使用示例
 └── scripts/
+    ├── search_bedtime_transcripts.mjs
+    ├── search_zhihu_official_answers.mjs
+    ├── zhihu/                  # 可复跑抓取、转写脚本（不含登录态）
     └── install.sh               # 可选安装脚本
 ```
 
@@ -168,9 +182,9 @@ madugong-perspective-skill/
 
 ---
 
-## 📜 许可
+## 📜 许可与语料权利
 
-MIT License
+MIT License 仅适用于本仓库自行编写的代码与说明文件。`work/BedtimeNews-Transcripts/` 中的节目文稿和 `work/ZhihuOfficial-Answers/` 中的知乎回答，其著作权仍归原权利人；纳入本仓库用于检索、学习、核验与短引，不构成对原文的重新授权。使用、镜像或再发布前应自行确认适用的权利和平台规则。
 
 ---
 

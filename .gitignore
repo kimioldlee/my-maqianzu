@@ -1,0 +1,5 @@
+# Do not commit browser profiles, cookies, or saved login state when refreshing Zhihu data.
+**/zhihu-session/
+**/zhihu_state.json
+**/.workbuddy/
+**/__pycache__/
