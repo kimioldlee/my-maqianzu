@@ -1,7 +1,7 @@
 """把抓取到的知乎回答 HTML 转成 markdown 文字稿，并按日期生成索引。
 
 输入：zhihu_answers_raw.jsonl
-输出：zhihu_md/<日期>-<回答id>.md  以及  zhihu_INDEX.md
+输出：answers/<日期>-<回答id>.md  以及  INDEX.md（链接前缀为 answers/）
 """
 import json
 import os

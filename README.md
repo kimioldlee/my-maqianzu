@@ -10,7 +10,7 @@
 
 ## 📖 简介
 
-先检索《睡前消息》对同一事件或同类机制的既有观点，再用节目方法分析新事件。2029 篇 `马前卒official` 知乎回答只补充节目未充分覆盖的相似案例；该账号是节目组专用号，不自动等同于任冲昊个人原话。
+先检索《睡前消息》对同一事件或同类机制的既有观点，再用节目方法分析新事件。2047 篇 `马前卒official` 知乎回答只补充节目未充分覆盖的相似案例；该账号是节目组专用号，不自动等同于任冲昊个人原话。
 
 文字稿目录：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>
 
@@ -79,7 +79,7 @@
 | `15-transcript-framework.md` | 文字稿检索规则、节目方法论与跨期观点索引 |
 | `16-coverage-matrix.md` | 合理终点定义、主题覆盖矩阵与检索回归场景 |
 | `17-full-corpus-digest.md` | 892篇文稿的离线召回摘要 |
-| `18-zhihu-official-corpus.md` | 2029篇官方账号回答的语料范围、检索和归因边界 |
+| `18-zhihu-official-corpus.md` | 2047篇官方账号回答的语料范围、检索和归因边界 |
 
 > 文字稿目录核验截至 2026 年 11 月 2 日，覆盖到第1124期。所有现实数据仍需在使用时核验。
 
@@ -89,7 +89,7 @@
 
 ### 获取文件
 
-首次使用请获取整个仓库，而不是只打开或复制 `SKILL.md`。本技能的离线索引、892篇节目文稿摘要、节目全文、2029篇知乎回答、检索脚本和原始 HTML 备份都在仓库的附属路径中；某些平台仍可能只自动挂载 `SKILL.md` 和 `SOUL.md`，这时技能会按 `SKILL.md` 中的 Raw/在线降级规则运行。
+首次使用请获取整个仓库，而不是只打开或复制 `SKILL.md`。本技能的离线索引、892篇节目文稿摘要、节目全文、2047篇知乎回答、检索脚本和原始 HTML 备份都在仓库的附属路径中；某些平台仍可能只自动挂载 `SKILL.md` 和 `SOUL.md`，这时技能会按 `SKILL.md` 中的 Raw/在线降级规则运行。
 
 ```bash
 # 方式一：git clone（推荐）
@@ -161,7 +161,7 @@ madugong-perspective-skill/
 │       └── 18-zhihu-official-corpus.md
 ├── work/
 │   ├── BedtimeNews-Transcripts/ # 892篇节目文稿正文
-│   └── ZhihuOfficial-Answers/   # 2029篇官方账号回答与原始 HTML
+│   └── ZhihuOfficial-Answers/   # 2047篇官方账号回答与原始 HTML
 ├── examples/
 │   └── usage-examples.md        # 使用示例
 └── scripts/

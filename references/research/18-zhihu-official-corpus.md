@@ -6,11 +6,11 @@
 
 ## 资源范围
 
-- 正文：`work/ZhihuOfficial-Answers/answers/`，共 2029 篇 Markdown 文稿。
+- 正文：`work/ZhihuOfficial-Answers/answers/`，共 2047 篇 Markdown 文稿。
 - 主索引：`work/ZhihuOfficial-Answers/zhihu-official-answer-index.json`，由全部正文生成。
 - 人工浏览索引：`work/ZhihuOfficial-Answers/INDEX.md`。
 - 原始备份：`work/ZhihuOfficial-Answers/zhihu-answers-raw.jsonl`，保留知乎 HTML，供将来重新排版或复核提取结果使用。
-- 当前覆盖范围：2020-01-24 至 2026-10-22；年分布为 2020 年 299 篇、2021 年 164 篇、2022 年 515 篇、2023 年 191 篇、2024 年 22 篇、2025 年 533 篇、2026 年 305 篇。
+- 当前覆盖范围：2020-01-24 至 2026-11-01；年分布为 2020 年 299 篇、2021 年 164 篇、2022 年 515 篇、2023 年 191 篇、2024 年 22 篇、2025 年 533 篇、2026 年 323 篇。
 
 采集过程中的网页滚动索引未纳入发布包，因为它只含 913 条项目，不能作为全量检索入口。
 
