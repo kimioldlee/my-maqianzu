@@ -22,17 +22,17 @@ description: |
 
 不得只依靠少数代表期数。对用户问题进行检索时，先在全部已收录节目文稿中搜索，再阅读最相关的正文、附录与相邻期数。
 
-- 当前已核验的文字稿库共有889篇：868篇带节目编号的文稿（860篇整期与8篇`.5`特辑）以及21篇演讲、访谈、年度文与专题材料。编号范围从第1期到第1075期，但节目更新并非每个整数期号都有对应节目，这是编号不连续，不是空白或失效文件。
-- “第1075期”表示最高节目编号；`889篇`表示当前可学习文稿总数。不得根据未出现的期号靠标题、二手摘要或想象补写观点。
-- 本 skill 的主语料是《睡前消息》文字稿。完整仓库安装时，原文位于 `work/BedtimeNews-Transcripts/`，全量索引位于 `bedtime-transcript-index.json`，发布包还包含 [全量离线摘要](references/research/17-full-corpus-digest.md)。摘要可在原文暂时不可见时召回全部889篇文稿的标题、主题、章节、问题句、跨期引用、附录状态和表达标记，但不能替代正文和附录。
-- 完整仓库另含 2029 篇 `马前卒official` 知乎回答，覆盖 2020-01-24 至 2026-10-22。正文在 `work/ZhihuOfficial-Answers/answers/`，规范索引在 `work/ZhihuOfficial-Answers/zhihu-official-answer-index.json`，原始 HTML 备份在 `work/ZhihuOfficial-Answers/zhihu-answers-raw.jsonl`。它是二级补充库，不计入889篇节目文字稿，也不参与节目期号或观点覆盖统计。
+- 当前已核验的文字稿库共有892篇：871篇带节目编号的文稿（863篇整期与8篇`.5`特辑）以及21篇演讲、访谈、年度文与专题材料。编号范围从第1期到第1124期，但节目更新并非每个整数期号都有对应节目，这是编号不连续，不是空白或失效文件。
+- “第1124期”表示最高节目编号；`892篇`表示当前可学习文稿总数。不得根据未出现的期号靠标题、二手摘要或想象补写观点。
+- 本 skill 的主语料是《睡前消息》文字稿。完整仓库安装时，原文位于 `work/BedtimeNews-Transcripts/`，全量索引位于 `bedtime-transcript-index.json`，发布包还包含 [全量离线摘要](references/research/17-full-corpus-digest.md)。摘要可在原文暂时不可见时召回全部892篇文稿的标题、主题、章节、问题句、跨期引用、附录状态和表达标记，但不能替代正文和附录。
+- 完整仓库另含 2029 篇 `马前卒official` 知乎回答，覆盖 2020-01-24 至 2026-10-22。正文在 `work/ZhihuOfficial-Answers/answers/`，规范索引在 `work/ZhihuOfficial-Answers/zhihu-official-answer-index.json`，原始 HTML 备份在 `work/ZhihuOfficial-Answers/zhihu-answers-raw.jsonl`。它是二级补充库，不计入892篇节目文字稿，也不参与节目期号或观点覆盖统计。
 - 可复现索引器位于 `scripts/index_bedtime_transcripts.mjs`。在其他环境先克隆文字稿仓库，再运行：
 
 ```powershell
 node scripts/index_bedtime_transcripts.mjs <transcript-repo> <output-index.json>
 ```
 
-- 索引覆盖全部889篇文稿的日期、标题、章节、开场句、问题句、跨期自引、附录订正标签与表达标记；带节目编号的文稿额外记录期号。索引用于召回候选文稿，不能替代正文阅读。
+- 索引覆盖全部892篇文稿的日期、标题、章节、开场句、问题句、跨期自引、附录订正标签与表达标记；带节目编号的文稿额外记录期号。索引用于召回候选文稿，不能替代正文阅读。
 - 全文检索器位于 `scripts/search_bedtime_transcripts.mjs`。逗号分隔的词采用“同时命中”逻辑；事件词和机制词应分别检索，避免只用标题匹配：
 
 ```powershell
@@ -67,7 +67,7 @@ node scripts/search_zhihu_official_answers.mjs work/ZhihuOfficial-Answers "生�
 4. 旧站频道：<https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/INDEX.html>
 5. 只有节目没有直接材料时，才读取知乎补充索引 Raw 文件：<https://raw.githubusercontent.com/kimioldlee/my-maqianzu/main/work/ZhihuOfficial-Answers/zhihu-official-answer-index.json>
 
-摘要/索引可用于定位候选期数；必须能打开对应正文时，才把内容称为“节目原文依据”或“官方账号补充”。如果节目 Raw、在线入口和本地原文都不可访问，使用本文件的方法论与已写入的跨主题线索回答，并明确标注“当前未执行全文检索”；不得声称读过未实际读取的正文、附录、889篇节目文稿或2029篇知乎回答。若只能看到摘要，应明确写“依据离线摘要定位，未回读正文”；若只能看到知乎索引，应明确写“依据知乎索引定位，未回读回答正文”。
+摘要/索引可用于定位候选期数；必须能打开对应正文时，才把内容称为“节目原文依据”或“官方账号补充”。如果节目 Raw、在线入口和本地原文都不可访问，使用本文件的方法论与已写入的跨主题线索回答，并明确标注“当前未执行全文检索”；不得声称读过未实际读取的正文、附录、892篇节目文稿或2029篇知乎回答。若只能看到摘要，应明确写“依据离线摘要定位，未回读正文”；若只能看到知乎索引，应明确写“依据知乎索引定位，未回读回答正文”。
 
 资源优先级不是“永远先在线”：以当前实际可读者为准。完整仓库模式优先本地索引/原文，在线页面用于勘误和时效更新；核心文件模式优先 Raw 摘要/索引，再尝试两个在线入口。**仓库设为私有时，未认证会话不能可靠读取上述 GitHub Raw 链接**；此时必须以完整本地安装、已认证的 GitHub 工具或公开的节目网站为准，不能把 Raw URL 当作必然可访问的备用库。
 

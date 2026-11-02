@@ -89,7 +89,10 @@ function parseArticle(filePath, kind = "episode") {
   const bodyLines = body.split("\n");
   const proseLines = bodyLines.filter((line) => !line.startsWith("#"));
   const title = raw.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? "";
-  const date = raw.match(/^\*\*发布日期\*\*\s*(\d{4}-\d{2}-\d{2})/m)?.[1] ?? "";
+  const date =
+    raw.match(/^\*\*发布日期\*\*\s*(\d{4}-\d{2}-\d{2})/m)?.[1] ??
+    raw.match(/^发布日期\s*(\d{4}-\d{2}-\d{2})/m)?.[1] ??
+    "";
   const sections = [...body.matchAll(/^##\s+(.+)$/gm)].map((match) => match[1].trim());
   const questions = proseLines
     .filter((line) => line.length >= 4 && line.length <= 180 && /[？?]$/.test(line.trim()))
@@ -143,7 +146,8 @@ const supplements = supplementFiles.map((filePath) => parseArticle(filePath, "su
 const integerEpisodes = new Set(
   episodes.filter((article) => /^\d{4}$/.test(article.episode)).map((article) => Number(article.episode)),
 );
-const missingEpisodes = Array.from({ length: 1075 }, (_, index) => index + 1).filter(
+const highestEpisodeNumber = integerEpisodes.size ? Math.max(...integerEpisodes) : 0;
+const missingEpisodes = Array.from({ length: highestEpisodeNumber }, (_, index) => index + 1).filter(
   (episode) => !integerEpisodes.has(episode),
 );
 
@@ -156,7 +160,7 @@ const index = {
     legacySourceUrl,
   },
   coverage: {
-    highestEpisodeNumber: 1075,
+    highestEpisodeNumber,
     indexedDocuments: episodes.length,
     indexedIntegerEpisodes: integerEpisodes.size,
     indexedFractionalEpisodes: episodes.length - integerEpisodes.size,
@@ -169,4 +173,4 @@ const index = {
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, `${JSON.stringify(index)}\n`, "utf8");
-console.log(`Indexed ${episodes.length} transcript documents through episode 1075.`);
+console.log(`Indexed ${episodes.length} transcript documents through episode ${highestEpisodeNumber}.`);

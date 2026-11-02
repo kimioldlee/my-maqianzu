@@ -28,7 +28,7 @@ documents.sort((left, right) => {
 const lines = [
   "# 《睡前消息》全量语料离线摘要",
   "",
-  "> 由 `bedtime-transcript-index.json` 生成。它覆盖现有 889 篇文稿，用于离线召回和跨期比较；它不是正文替代品。回答具体事件时，若原文可用，仍须回读正文与附录。",
+  `> 由 \`bedtime-transcript-index.json\` 生成。它覆盖现有 ${documents.length} 篇文稿，用于离线召回和跨期比较；它不是正文替代品。回答具体事件时，若原文可用，仍须回读正文与附录。`,
   ">",
   `> 生成文稿数：${documents.length}；编号文稿：${index.episodes.length}；补充材料：${index.supplements.length}；最高编号：${index.coverage.highestEpisodeNumber}。`,
   "",

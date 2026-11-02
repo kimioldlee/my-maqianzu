@@ -78,10 +78,10 @@
 | `14-zhihu-answers.md` | 知乎账号边界与相似事件补充观点 |
 | `15-transcript-framework.md` | 文字稿检索规则、节目方法论与跨期观点索引 |
 | `16-coverage-matrix.md` | 合理终点定义、主题覆盖矩阵与检索回归场景 |
-| `17-full-corpus-digest.md` | 889篇文稿的离线召回摘要 |
+| `17-full-corpus-digest.md` | 892篇文稿的离线召回摘要 |
 | `18-zhihu-official-corpus.md` | 2029篇官方账号回答的语料范围、检索和归因边界 |
 
-> 文字稿目录核验截至 2026 年 9 月 16 日，覆盖到第1075期。所有现实数据仍需在使用时核验。
+> 文字稿目录核验截至 2026 年 11 月 2 日，覆盖到第1124期。所有现实数据仍需在使用时核验。
 
 ---
 
@@ -89,7 +89,7 @@
 
 ### 获取文件
 
-首次使用请获取整个仓库，而不是只打开或复制 `SKILL.md`。本技能的离线索引、889篇节目文稿摘要、节目全文、2029篇知乎回答、检索脚本和原始 HTML 备份都在仓库的附属路径中；某些平台仍可能只自动挂载 `SKILL.md` 和 `SOUL.md`，这时技能会按 `SKILL.md` 中的 Raw/在线降级规则运行。
+首次使用请获取整个仓库，而不是只打开或复制 `SKILL.md`。本技能的离线索引、892篇节目文稿摘要、节目全文、2029篇知乎回答、检索脚本和原始 HTML 备份都在仓库的附属路径中；某些平台仍可能只自动挂载 `SKILL.md` 和 `SOUL.md`，这时技能会按 `SKILL.md` 中的 Raw/在线降级规则运行。
 
 ```bash
 # 方式一：git clone（推荐）
@@ -139,7 +139,7 @@ madugong-perspective-skill/
 ├── SKILL.md                     # 核心检索与分析规则
 ├── SOUL.md                      # 兼容摘要
 ├── LICENSE                      # MIT
-├── bedtime-transcript-index.json # 889篇节目文稿的召回索引
+├── bedtime-transcript-index.json # 892篇节目文稿的召回索引
 ├── references/
 │   └── research/                # 完整调研资料
 │       ├── 01-writings.md
@@ -160,7 +160,7 @@ madugong-perspective-skill/
 │       ├── 17-full-corpus-digest.md
 │       └── 18-zhihu-official-corpus.md
 ├── work/
-│   ├── BedtimeNews-Transcripts/ # 889篇节目文稿正文
+│   ├── BedtimeNews-Transcripts/ # 892篇节目文稿正文
 │   └── ZhihuOfficial-Answers/   # 2029篇官方账号回答与原始 HTML
 ├── examples/
 │   └── usage-examples.md        # 使用示例
@@ -177,7 +177,7 @@ madugong-perspective-skill/
 
 1. **这不是马督工本人。** 这是基于公开信息提炼的思维框架。
 2. **局限性：** 节目观点受当时资料与条件约束，框架推演不等于本人观点。
-3. **时效性：** 文字稿目录核验截至 2026 年 9 月 16 日；现实事件仍需实时核验。
+3. **时效性：** 文字稿目录核验截至 2026 年 11 月 2 日；现实事件仍需实时核验。
 4. **开源：** 欢迎 Fork 和贡献，请保留 Nuwa Engine 出处。
 
 ---
