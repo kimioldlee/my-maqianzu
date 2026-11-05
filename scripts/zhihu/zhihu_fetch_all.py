@@ -1,7 +1,7 @@
 """在已登录浏览器会话内分页抓取「马前卒official」全部知乎回答（含正文 HTML）。
 
 用法：python zhihu_fetch_all.py [每页条数，默认20]
-输出：zhihu_answers_raw.jsonl（逐条追加，可断点续跑）
+输出：zhihu-answers-raw.jsonl（按回答 ID 保留最新版本）
 """
 import json
 import os
@@ -38,15 +38,16 @@ JS = """async (api) => {
 def main() -> None:
     DATA_ROOT.mkdir(parents=True, exist_ok=True)
     limit = int(sys.argv[1]) if len(sys.argv) > 1 else 20
-    done = set()
+    records = {}
     if OUT.exists():
         for line in OUT.read_text(encoding="utf-8").splitlines():
             if line.strip():
                 try:
-                    done.add(json.loads(line)["id"])
+                    rec = json.loads(line)
+                    records[str(rec["id"])] = rec
                 except Exception:
                     pass
-    print(f"已有 {len(done)} 条，继续抓取。", flush=True)
+    print(f"已有 {len(records)} 条，检查新增和更新。", flush=True)
 
     with sync_playwright() as p:
         kwargs = {"user_data_dir": str(PROFILE), "headless": False,
@@ -60,58 +61,67 @@ def main() -> None:
 
         offset = 0
         total = None
-        with OUT.open("a", encoding="utf-8") as fh:
-            while True:
+        added = updated = 0
+        while True:
+            res = page.evaluate(JS, API.format(offset=offset, limit=limit))
+            if res["status"] != 200:
+                print(f"offset={offset} 返回 {res['status']}，等待后重试", flush=True)
+                page.wait_for_timeout(5000)
                 res = page.evaluate(JS, API.format(offset=offset, limit=limit))
                 if res["status"] != 200:
-                    print(f"offset={offset} 返回 {res['status']}，等待后重试", flush=True)
-                    page.wait_for_timeout(5000)
-                    res = page.evaluate(JS, API.format(offset=offset, limit=limit))
-                    if res["status"] != 200:
-                        print("仍失败，停止。", flush=True)
-                        break
-                try:
-                    data = json.loads(res["body"])
-                except Exception as exc:  # noqa: BLE001
-                    print("解析失败：", exc, res["body"][:300], flush=True)
-                    break
-                if total is None:
-                    total = data.get("paging", {}).get("totals")
-                    print(f"总量：{total}", flush=True)
-                items = data.get("data", [])
-                if not items:
-                    print("本页为空，停止。", flush=True)
-                    break
-                new = 0
-                for it in items:
-                    if it["id"] in done:
-                        continue
-                    q = it.get("question") or {}
-                    rec = {
-                        "id": it.get("id"),
-                        "question_id": q.get("id"),
-                        "question_title": q.get("title"),
-                        "question_excerpt": (q.get("excerpt") or "")[:500],
-                        "created_time": it.get("created_time"),
-                        "updated_time": it.get("updated_time"),
-                        "voteup_count": it.get("voteup_count"),
-                        "comment_count": it.get("comment_count"),
-                        "excerpt": it.get("excerpt"),
-                        "content_html": it.get("content"),
-                        "url": f"https://www.zhihu.com/question/{q.get('id')}/answer/{it.get('id')}",
-                    }
-                    fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
-                    done.add(it["id"])
-                    new += 1
-                fh.flush()
-                print(f"offset={offset}: 本页 {len(items)}，新增 {new}，累计 {len(done)}", flush=True)
+                    raise RuntimeError(f"知乎 API 在 offset={offset} 连续失败，HTTP {res['status']}；原始语料未改写。")
+            try:
+                data = json.loads(res["body"])
+            except Exception as exc:  # noqa: BLE001
+                raise RuntimeError(f"知乎 API 在 offset={offset} 返回无效 JSON；原始语料未改写。") from exc
+            if total is None:
+                total = data.get("paging", {}).get("totals")
+                print(f"总量：{total}", flush=True)
+            items = data.get("data", [])
+            if not items:
                 if data.get("paging", {}).get("is_end"):
                     print("已到末页。", flush=True)
                     break
-                offset += limit
-                time.sleep(1.2)
+                raise RuntimeError(f"知乎 API 在 offset={offset} 提前返回空页；原始语料未改写。")
+
+            page_added = page_updated = 0
+            for it in items:
+                q = it.get("question") or {}
+                rec = {
+                    "id": str(it.get("id")),
+                    "question_id": q.get("id"),
+                    "question_title": q.get("title"),
+                    "question_excerpt": (q.get("excerpt") or "")[:500],
+                    "created_time": it.get("created_time"),
+                    "updated_time": it.get("updated_time"),
+                    "voteup_count": it.get("voteup_count"),
+                    "comment_count": it.get("comment_count"),
+                    "excerpt": it.get("excerpt"),
+                    "content_html": it.get("content"),
+                    "url": f"https://www.zhihu.com/question/{q.get('id')}/answer/{it.get('id')}",
+                }
+                key = rec["id"]
+                if key not in records:
+                    page_added += 1
+                elif records[key] != rec:
+                    page_updated += 1
+                records[key] = rec
+            added += page_added
+            updated += page_updated
+            print(f"offset={offset}: 本页 {len(items)}，新增 {page_added}，更新 {page_updated}", flush=True)
+            if data.get("paging", {}).get("is_end"):
+                print("已到末页。", flush=True)
+                break
+            offset += limit
+            time.sleep(1.2)
         ctx.close()
-    print(f"完成，共 {len(done)} 条 -> {OUT}")
+
+    temp_out = OUT.with_suffix(OUT.suffix + ".tmp")
+    with temp_out.open("w", encoding="utf-8", newline="\n") as fh:
+        for rec in records.values():
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    temp_out.replace(OUT)
+    print(f"完成：新增 {added} 条，更新 {updated} 条，共 {len(records)} 条 -> {OUT}")
 
 
 if __name__ == "__main__":

@@ -115,6 +115,21 @@ node scripts/search_bedtime_transcripts.mjs . "事件词,机制词" 8 --context-
 
 它也接受 `work\BedtimeNews-Transcripts` 或 `contents\ShuiQianXiaoXi` 作为路径。先看片段和行号，再按需要回读单篇原文；只有明确使用 `--full` 时才返回候选全文。完整规则见 [`LOCAL_RETRIEVAL.md`](LOCAL_RETRIEVAL.md)。
 
+检索器默认对少量常见概念做别名扩展，例如“地方债”会关联“地方政府债务、隐性债务、城投债”。这是为冷门话题提供低成本的额外召回，不是语义模型；未知专名仍需补充同义词或改写查询。用 `--no-expand` 可关闭扩展。
+
+### 每周自动刷新
+
+节目稿同步已配置为 `.github/workflows/weekly-transcript-sync.yml`：每周日自动从公开的 `BedtimeNews-Transcripts` 源仓库拉取 `ShuiQianXiaoXi`，重建索引和离线摘要，检查文稿数量后自动提交到本私有仓库。GitHub Actions 页面也可手动运行。
+
+知乎回答依赖本地已登录的浏览器会话，不能把 Cookie 放进 GitHub Actions。Windows 用户可在本机注册每周任务：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\register_weekly_sync.ps1 -ProjectRoot (Get-Location)
+schtasks /Run /TN "MyMaqianzu-WeeklyZhihuSync"
+```
+
+知乎任务会在临时目录抓取新增回答、重建全文和索引、校验文件数，再替换正式语料并提交推送。登录过期、验证码或设备验证会使本次任务失败，不会提交半成品；恢复登录后重新运行即可。详细说明见 [`LOCAL_RETRIEVAL.md`](LOCAL_RETRIEVAL.md)。
+
 ### 注入到 AI Agent
 
 将 `SKILL.md` 全部内容作为 System Prompt 注入即可。具体方式取决于你用的 AI 工具：

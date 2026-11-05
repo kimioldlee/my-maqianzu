@@ -1,0 +1,43 @@
+name: Weekly transcript sync
+
+on:
+  schedule:
+    - cron: "23 19 * * 6"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out this skill
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Refresh public transcript channel and indexes
+        env:
+          BEDTIME_MIN_DOCUMENTS: "700"
+        run: |
+          node scripts/sync_bedtime_transcripts.mjs .
+          node scripts/index_bedtime_transcripts.mjs work/BedtimeNews-Transcripts bedtime-transcript-index.json
+          node scripts/generate_corpus_digest.mjs bedtime-transcript-index.json references/research/17-full-corpus-digest.md
+          node -e 'const x=require("./bedtime-transcript-index.json"); if(x.coverage.indexedDocuments < 700) process.exit(1); console.log(x.coverage)'
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add work/BedtimeNews-Transcripts/ bedtime-transcript-index.json references/research/17-full-corpus-digest.md
+          if git diff --cached --quiet; then
+            echo "No transcript changes."
+            exit 0
+          fi
+          git commit -m "Weekly transcript corpus refresh"
+          git push

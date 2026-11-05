@@ -41,6 +41,8 @@ node scripts/search_bedtime_transcripts.mjs . "土地财政,房产税" 8 --conte
 
 路径参数可写项目根目录、`work/BedtimeNews-Transcripts` 或 `contents/ShuiQianXiaoXi`。需要机器可读结果时加 `--json`；只有确认单篇候选需要全文时才加 `--full`。完整操作规则见 `LOCAL_RETRIEVAL.md`。
 
+检索器对少量常见概念默认做保守别名扩展，并在 JSON 的 `matchedVariants` 中报告实际命中的词；未知专名仍需人工补充同义词。严格字面匹配时使用 `--no-expand`。这一步只是低成本召回增强，不等于语义检索或观点判断。
+
 - 知乎补充库的规范索引器是 `scripts/index_zhihu_official_answers.mjs`，全文检索器是 `scripts/search_zhihu_official_answers.mjs`。仅在节目材料不足时使用：
 
 ```powershell

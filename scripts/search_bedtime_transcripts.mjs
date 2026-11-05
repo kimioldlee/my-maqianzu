@@ -26,12 +26,36 @@ Options:
   --context-lines N  lines on each side of a hit (default 24)
   --max-chars N      maximum returned evidence characters (default 24000)
   --max-files N      maximum candidate files (default limit)
+  --no-expand        disable built-in aliases and use literal terms only
   --all-channels     search every channel below contents/
   --json              emit machine-readable JSON
   --full              return complete candidate files; use only for one file`;
 
 const catalogUrl = "https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi";
 const legacySourceUrl = "https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/";
+
+// Small, conservative aliases improve recall for cold topics without the cost
+// or opacity of a vector index. A query still requires every conceptual group
+// to match in the same document.
+const aliasGroups = [
+  ["房价", "房屋价格", "楼市", "房地产市场", "商品房", "住房"],
+  ["房产税", "房地产税"],
+  ["土地财政", "土地出让金", "土地出让收入", "土地收入"],
+  ["地方债", "地方政府债务", "地方债务", "隐性债务", "城投债", "城投"],
+  ["财政", "财政收入", "政府收入", "预算", "转移支付", "税收"],
+  ["基建", "基础设施", "公共工程"],
+  ["人口", "人口结构", "人口老龄化", "老龄化", "少子化"],
+  ["生育", "生育率", "出生率", "生孩子", "育儿"],
+  ["就业", "就业岗位", "工作岗位", "劳动市场"],
+  ["失业", "失业率", "失业人口"],
+  ["医疗", "医保", "医院", "医药", "看病"],
+  ["教育", "学校", "高校", "大学", "高考"],
+  ["平台", "互联网平台", "平台经济", "互联网企业", "大厂"],
+  ["人工智能", "AI", "大模型", "算法"],
+  ["新能源汽车", "新能源车", "电动车"],
+  ["农业", "农民", "农村", "乡村"],
+  ["监管", "监管部门", "政府监管", "执法", "治理"],
+];
 
 function positiveInt(value, name) {
   const number = Number(value);
@@ -52,6 +76,7 @@ function parseArgs(argv) {
     contextLines: 24,
     maxChars: 24000,
     maxFiles: limit,
+    expand: true,
     allChannels: false,
     json: false,
     full: false,
@@ -60,6 +85,7 @@ function parseArgs(argv) {
   for (let index = hasLimit ? 3 : 2; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--all-channels") options.allChannels = true;
+    else if (arg === "--no-expand") options.expand = false;
     else if (arg === "--json") options.json = true;
     else if (arg === "--full") options.full = true;
     else if (arg === "--context-lines") options.contextLines = positiveInt(argv[++index], "--context-lines");
@@ -123,6 +149,17 @@ function folded(text) {
   return text.toLocaleLowerCase("zh-CN");
 }
 
+function variantsFor(term, expand) {
+  const normalized = folded(term.trim());
+  if (!expand) return [term.trim()];
+  const group = aliasGroups.find((aliases) => aliases.some((alias) => folded(alias) === normalized));
+  return group ? [...new Set(group)] : [term.trim()];
+}
+
+function queryGroups(terms, expand) {
+  return terms.map((term) => ({ query: term, variants: variantsFor(term, expand) }));
+}
+
 function occurrences(text, term) {
   const source = folded(text);
   const needle = folded(term);
@@ -136,9 +173,18 @@ function occurrences(text, term) {
   }
 }
 
-function matchingTerms(text, terms) {
+function matchingTerms(text, groups) {
   const source = folded(text);
-  return terms.filter((term) => source.includes(folded(term)));
+  return groups.filter((group) => group.variants.some((variant) => source.includes(folded(variant))));
+}
+
+function matchedVariants(text, groups) {
+  const source = folded(text);
+  return groups.flatMap((group) => group.variants.filter((variant) => source.includes(folded(variant))).map((variant) => ({ query: group.query, variant })));
+}
+
+function occurrencesOfVariants(text, variants) {
+  return variants.reduce((total, variant) => total + occurrences(text, variant), 0);
 }
 
 function titleFrom(lines, file) {
@@ -199,6 +245,7 @@ function fitToBudget(results, maxChars) {
 
 async function main() {
   const { input, terms, limit, options } = parseArgs(process.argv.slice(2));
+  const groups = queryGroups(terms, options.expand);
   const resolved = await resolveSearchRoot(input, options.allChannels);
   const files = await walkMarkdown(resolved.root);
   const matches = [];
@@ -206,16 +253,16 @@ async function main() {
   for (const file of files) {
     const text = await fs.readFile(file, "utf8");
     const lines = text.split(/\r?\n/);
-    const foundTerms = matchingTerms(text, terms);
-    if (foundTerms.length !== terms.length) continue;
-    const hitLines = lines.map((line, index) => matchingTerms(line, terms).length ? index + 1 : 0).filter(Boolean);
+    const foundGroups = matchingTerms(text, groups);
+    if (foundGroups.length !== groups.length) continue;
+    const hitLines = lines.map((line, index) => matchingTerms(line, groups).length ? index + 1 : 0).filter(Boolean);
     const title = titleFrom(lines, file);
     const date = text.match(/^\*\*发布日期\*\*\s*(\d{4}-\d{2}-\d{2})/m)?.[1] ?? "";
     const sections = [...text.matchAll(/^##\s+(.+)$/gm)].map((match) => match[1].trim());
-    const score = terms.reduce((total, term) => (
-      total + (folded(title).includes(folded(term)) ? 12 : 0)
-        + sections.filter((section) => folded(section).includes(folded(term))).length * 6
-        + occurrences(text, term)
+    const score = groups.reduce((total, group) => (
+      total + (group.variants.some((variant) => folded(title).includes(folded(variant))) ? 12 : 0)
+        + sections.filter((section) => group.variants.some((variant) => folded(section).includes(folded(variant)))).length * 6
+        + occurrencesOfVariants(text, group.variants)
     ), 0);
     const relativePath = path.relative(resolved.relativeRoot, file).replaceAll(path.sep, "/");
     matches.push({
@@ -228,11 +275,12 @@ async function main() {
       path: relativePath,
       url: catalogUrl,
       legacyUrl: `${legacySourceUrl}${relativePath.replace(/\.md$/, ".html")}`,
-      foundTerms,
+      foundTerms: foundGroups.map((group) => group.query),
+      matchedVariants: matchedVariants(text, groups),
       hitLines,
       totalLines: lines.length,
       score,
-      matchedSections: sections.filter((section) => terms.some((term) => folded(section).includes(folded(term)))),
+      matchedSections: sections.filter((section) => groups.some((group) => group.variants.some((variant) => folded(section).includes(folded(variant))))),
       snippets: snippetsFor(lines, hitLines, options.contextLines, options.full),
     });
   }
@@ -242,6 +290,7 @@ async function main() {
   const fitted = fitToBudget(candidates, options.maxChars);
   const payload = {
     query: terms,
+    queryGroups: groups,
     scope: resolved.scope,
     searchRoot: resolved.root,
     totalScanned: files.length,
@@ -251,6 +300,7 @@ async function main() {
     truncated: fitted.truncated,
     contextLines: options.contextLines,
     full: options.full,
+    expanded: options.expand,
     results: fitted.results,
   };
 
@@ -258,7 +308,7 @@ async function main() {
     process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
     return;
   }
-  console.log(`query=${terms.join(",")} scope=${payload.scope} total=${payload.total} returned=${payload.returned} scanned=${payload.totalScanned} chars=${payload.outputChars} truncated=${payload.truncated}`);
+  console.log(`query=${terms.join(",")} scope=${payload.scope} total=${payload.total} returned=${payload.returned} scanned=${payload.totalScanned} chars=${payload.outputChars} truncated=${payload.truncated} expanded=${payload.expanded}`);
   for (const result of payload.results) {
     console.log(`\n## ${result.title}\n${result.relativePath}\nterms: ${result.foundTerms.join(", ")} | hits: ${result.hitLines.join(", ")} | lines: ${result.totalLines}`);
     for (const snippet of result.snippets) console.log(`${snippet}\n`);
