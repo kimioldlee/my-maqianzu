@@ -104,6 +104,17 @@ curl -LO https://github.com/kimioldlee/my-maqianzu/archive/refs/heads/main.zip
 
 仓库为私有时，`git clone`、下载 ZIP 和 GitHub Raw 都要求当前 GitHub 账号或访问令牌拥有该仓库权限。若 AI 平台只加载 `SKILL.md`，却没有挂载附属目录，也无法在未认证条件下用 Raw 链接读取私有语料；应将完整克隆目录作为本地项目打开。
 
+### 低上下文本地检索
+
+本地语料不需要每次全部读入模型。默认使用边界检索器，只返回命中行附近的证据片段：
+
+```powershell
+cd my-maqianzu
+node scripts/search_bedtime_transcripts.mjs . "事件词,机制词" 8 --context-lines 24 --max-chars 24000 --json
+```
+
+它也接受 `work\BedtimeNews-Transcripts` 或 `contents\ShuiQianXiaoXi` 作为路径。先看片段和行号，再按需要回读单篇原文；只有明确使用 `--full` 时才返回候选全文。完整规则见 [`LOCAL_RETRIEVAL.md`](LOCAL_RETRIEVAL.md)。
+
 ### 注入到 AI Agent
 
 将 `SKILL.md` 全部内容作为 System Prompt 注入即可。具体方式取决于你用的 AI 工具：
