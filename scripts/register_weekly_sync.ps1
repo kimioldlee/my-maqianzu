@@ -1,4 +1,4 @@
-param(
+﻿param(
   [string]$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\")).Path,
   [string]$TaskName = "MyMaqianzu-WeeklyZhihuSync",
   [string]$Day = "SUN",
