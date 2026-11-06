@@ -23,8 +23,8 @@ Path forms accepted:
   ShuiQianXiaoXi channel directory
 
 Options:
-  --context-lines N  lines on each side of a hit (default 24)
-  --max-chars N      maximum returned evidence characters (default 24000)
+  --context-lines N  lines on each side of a hit (default 12)
+  --max-chars N      maximum returned evidence characters (default 12000)
   --max-files N      maximum candidate files (default limit)
   --no-expand        disable built-in aliases and use literal terms only
   --all-channels     search every channel below contents/
@@ -73,8 +73,8 @@ function parseArgs(argv) {
   const hasLimit = argv[2] !== undefined && /^\d+$/.test(argv[2]);
   const limit = hasLimit ? Math.max(1, Number(argv[2])) : 20;
   const options = {
-    contextLines: 24,
-    maxChars: 24000,
+    contextLines: 12,
+    maxChars: 12000,
     maxFiles: limit,
     expand: true,
     allChannels: false,
