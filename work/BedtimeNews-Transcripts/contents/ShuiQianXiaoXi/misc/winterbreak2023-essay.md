@@ -1,6 +1,6 @@
 # 讨论人口问题的三个层次，你在哪一层？——马督工2024年春节回乡随笔
 
-**发布日期** 2024-02-10 | [B站（非官方补档）](https://www.bilibili.com/video/BV1Du4m1N7UD) | [Google Drive（非官方补档）](https://drive.google.com/file/d/1ZQs0EivK7W0bwxKCiydqZLgw80EVZDFB/view?usp=sharing)
+发布日期 2024-02-10 | [B站（非官方补档）](https://www.bilibili.com/video/BV1Du4m1N7UD) | [Google Drive（非官方补档）](https://drive.google.com/file/d/1ZQs0EivK7W0bwxKCiydqZLgw80EVZDFB/view?usp=sharing)
 
 ## 正文
 
@@ -28,11 +28,6 @@
 
 ## 附录
 
-### 信息来源
+### 已核对
 
-- 无。日期、数字与事实性表述均与原文一致。
-
-### 待核对
-
-- 「给自己准备一点**底限**的安全感」：公众号原文即写作「底限」（「底线」的常见异形写法），尊重原文用字
-- front matter 中 `tags: ` 的行尾空格为全仓库既有统一格式。 本文为公众号文章存档，无中插广告，亦无
+- 无。日期、数字与事实性表述。
