@@ -156,6 +156,8 @@ schtasks /Run /TN "MyMaqianzu-WeeklyZhihuSync"
 
 调用提示中的“验证失败”“硬门失败”或“停止”只指技术性失败：资源不可读、检索器无法运行、搜索根目录错误、命中原文无法回读，或 Sepia 没有真实返回。检索器正常但当前话题零命中属于 `corpus_available + direct_hit_count=0`，技能会拆词分别检索事件词、主体词、机制词和近义词，再查机制相似节目、较晚节目及马前卒official/知乎语料；即使最终仍无直接命中，也会基于核验过的当前事实继续分析和成稿，并把判断标为“当前事实”“基于节目框架的推演”或“本助手补充判断”，不会标记 `corpus_failed` 或停止流程。
 
+关于 Sepia：用户只需一次提交新闻材料和完整流程要求，Agent 就会自动连续编排 `sepia-review -> sepia-refactor -> sepia-review`，分别产出对初稿的诊断、修改后的完整正文与实际修改记录、以及对修改稿的复查记录。调用时出现的 “Launching skill”、“Loaded a skill”、“Got the result” 或 SKILL.md 加载确认只是技能加载确认，不是诊断结果，也不代表失败；加载后 Agent 必须立即继续执行三个阶段，用户不需要再次调用、逐步点击或输入 `/sepia-review`、`/sepia-refactor`。Sepia 结果是当前 Agent 依据 Sepia 技能完成的审校，不是独立第三方测评或客观认证；只有明确的技能无法加载、SKILL.md 不可读、工具报错、Agent 无法按已加载规则执行，或阶段未产出诊断/修改稿/复查记录等真正执行错误，才标记 `sepia_call_failed`。
+
 技能会优先检索“电价、能源、输配电、补贴、维护”等直接词和机制词，回读有限的相关原文，再核验当前调价文件。最终会区分节目明确观点、官方账号回应或补充、当前事实和助手推演；若某项资源未实际可读，会如实说明；若检索器正常但话题零命中，会如实记录扫描文件数与零命中事实并继续补充检索。完整流程和边界见 [`SKILL.md`](SKILL.md)。
 
 > 更多示例见 `examples/usage-examples.md`
