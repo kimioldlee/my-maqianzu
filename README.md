@@ -158,6 +158,8 @@ schtasks /Run /TN "MyMaqianzu-WeeklyZhihuSync"
 
 关于 Sepia：用户只需一次提交新闻材料和完整流程要求，Agent 就会自动连续编排 `sepia-review -> sepia-refactor -> sepia-review`，分别产出对初稿的诊断、修改后的完整正文与实际修改记录、以及对修改稿的复查记录。调用时出现的 “Launching skill”、“Loaded a skill”、“Got the result” 或 SKILL.md 加载确认只是技能加载确认，不是诊断结果，也不代表失败；加载后 Agent 必须立即继续执行三个阶段，用户不需要再次调用、逐步点击或输入 `/sepia-review`、`/sepia-refactor`。Sepia 结果是当前 Agent 依据 Sepia 技能完成的审校，不是独立第三方测评或客观认证；只有明确的技能无法加载、SKILL.md 不可读、工具报错、Agent 无法按已加载规则执行，或阶段未产出诊断/修改稿/复查记录等真正执行错误，才标记 `sepia_call_failed`。
 
+关于终稿验证：用户仍然只需提交一次新闻材料，不需要逐步调用 Sepia 或验证器。最终稿正文独立保存为 `outputs/final_draft.md`，审计数据保存为 `outputs/final_audit.json`；交付前 Agent 会运行 `node scripts/validate_final_draft.mjs outputs/final_draft.md outputs/final_audit.json --json`，并保存原始 JSON 与退出码。验证器从文件真实内容重新计算字数、破折号、节目名/期数、占位符、方案六要素正文证据和 11 项评分；评分由每项 10 个 0/1 二元检查点重算，单项分数只能是 0 至 10 的整数，综合平均分可为小数但必须由 11 项实际得分计算。只有验证器返回 `pass=true` 且退出码 0，才会标记为最终稿；验证失败时 Agent 依据 `violations` 自动修改并复检，不要求用户逐项纠错。验证器测试用例见 `tests/validate_final_draft.test.mjs`。
+
 技能会优先检索“电价、能源、输配电、补贴、维护”等直接词和机制词，回读有限的相关原文，再核验当前调价文件。最终会区分节目明确观点、官方账号回应或补充、当前事实和助手推演；若某项资源未实际可读，会如实说明；若检索器正常但话题零命中，会如实记录扫描文件数与零命中事实并继续补充检索。完整流程和边界见 [`SKILL.md`](SKILL.md)。
 
 > 更多示例见 `examples/usage-examples.md`
@@ -197,11 +199,14 @@ madugong-perspective-skill/
 │   └── ZhihuOfficial-Answers/   # 2047篇官方账号回答与原始 HTML
 ├── examples/
 │   └── usage-examples.md        # 使用示例
-└── scripts/
-    ├── search_bedtime_transcripts.mjs
-    ├── search_zhihu_official_answers.mjs
-    ├── zhihu/                  # 可复跑抓取、转写脚本（不含登录态）
-    └── install.sh               # 可选安装脚本
+├── scripts/
+│   ├── search_bedtime_transcripts.mjs
+│   ├── search_zhihu_official_answers.mjs
+│   ├── validate_final_draft.mjs   # 终稿确定性验证器
+│   ├── zhihu/                  # 可复跑抓取、转写脚本（不含登录态）
+│   └── install.sh               # 可选安装脚本
+└── tests/
+    └── validate_final_draft.test.mjs  # 验证器测试用例/夹具
 ```
 
 ---
