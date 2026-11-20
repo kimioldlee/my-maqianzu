@@ -162,6 +162,24 @@ schtasks /Run /TN "MyMaqianzu-WeeklyZhihuSync"
 
 技能会优先检索“电价、能源、输配电、补贴、维护”等直接词和机制词，回读有限的相关原文，再核验当前调价文件。最终会区分节目明确观点、官方账号回应或补充、当前事实和助手推演；若某项资源未实际可读，会如实说明；若检索器正常但话题零命中，会如实记录扫描文件数与零命中事实并继续补充检索。完整流程和边界见 [`SKILL.md`](SKILL.md)。
 
+### 上下文预算与中断恢复
+
+完整流程以 `outputs/` 中的文件为准，正文不反复进入对话上下文：
+
+| 阶段 | 输入 | 输出 |
+|---|---|---|
+| 初稿 | — | `outputs/final_draft.md`（生成后立即保存） |
+| `sepia-review` 第一次 | `final_draft.md` | `outputs/sepia_review_1.md`（只回传精简问题类型、正文位置、修改计划） |
+| `sepia-refactor` | `final_draft.md` + `sepia_review_1.md` | 覆盖 `final_draft.md`；修改记录存 `outputs/sepia_refactor.md` |
+| `sepia-review` 第二次 | 修订后的 `final_draft.md` | `outputs/sepia_review_2.md` |
+| 终稿验证 | `final_draft.md` + `final_audit.json` | `outputs/final_validation.json`（Agent 只读 `pass`、`exitCode`、`violations` 和必要计数） |
+
+- Sepia 顺序固定为 `sepia-review → sepia-refactor → sepia-review`；**未经用户明确要求完全重写，禁止自动改用 `sepia-recreate` 或 `sepia-write`**。
+- 检索只保留最相关 1 至 3 篇的必要片段；大型文件分段或定点读取；不重复回读同一篇全文，不把检索器完整 JSON、完整索引、摘要、审计 JSON 或大型工具输出写入模型上下文；三个阶段均不在对话中重复展示完整修改前正文和修改后正文。
+- 若出现 `Autocompact is thrashing`、`context limit`、上下文压缩失败或类似错误，Agent 会立即停止加载技能与大型文件、保留所有 `outputs/` 文件、输出可在新会话直接使用的恢复提示，且**不从头重跑**检索和生成流程。
+- 断点续跑：若 `outputs/` 已有 `final_draft.md` 或阶段文件，只继续缺失阶段，不重复已完成且有效的预检、检索、事实核验和 Sepia 阶段。
+- 完整硬规则见 [`SKILL.md`](SKILL.md) 的「上下文预算与中断恢复硬规则」；只读静态检查见 [`tests/context_budget_rules.test.mjs`](tests/context_budget_rules.test.mjs)。
+
 > 更多示例见 `examples/usage-examples.md`
 
 ---
@@ -205,8 +223,16 @@ madugong-perspective-skill/
 │   ├── validate_final_draft.mjs   # 终稿确定性验证器
 │   ├── zhihu/                  # 可复跑抓取、转写脚本（不含登录态）
 │   └── install.sh               # 可选安装脚本
-└── tests/
-    └── validate_final_draft.test.mjs  # 验证器测试用例/夹具
+├── tests/
+│   ├── validate_final_draft.test.mjs  # 验证器测试用例/夹具
+│   └── context_budget_rules.test.mjs  # 上下文预算/中断恢复只读静态检查
+└── outputs/                     # 运行产物（已在 .gitignore 中忽略，不入库）
+    ├── final_draft.md           # 初稿 / 修订后的终稿正文
+    ├── final_audit.json         # 方案六要素证据与 11 项评分
+    ├── sepia_review_1.md        # 第一次 sepia-review 诊断
+    ├── sepia_refactor.md        # sepia-refactor 修改记录
+    ├── sepia_review_2.md        # 第二次 sepia-review 复查
+    └── final_validation.json    # 验证器原始 JSON
 ```
 
 ---
