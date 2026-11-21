@@ -18,9 +18,9 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, "..");
 const VALIDATOR = path.join(REPO, "scripts", "validate_final_draft.mjs");
 
-const QUALITY_GATES = [
-  "事实与归因", "因果与边界", "多方约束",
-  "可执行方案", "口播与去模板", "反驳与风险",
+const DIMENSIONS = [
+  "切入点准确性", "态度冷静度", "数据可信度", "逻辑严密度", "口播化程度",
+  "节目腔调", "观点完整性", "AI痕迹消除", "预判反驳力度", "政治现实感", "幽默恰当性",
 ];
 const SOLUTION_KEYS = [
   "执行主体", "权限或资金来源", "受影响方及补偿", "试点或过渡安排", "衡量指标", "停止或退出条件",
@@ -33,8 +33,13 @@ const SOLUTION_SENTENCES = [
   "以月度投诉量和办结率作为主要衡量指标",
   "若连续三个月指标未改善则停止试点并退出",
 ];
-const GATE_EVIDENCE = [
+const CHECKPOINT_EVIDENCE = [
   ...SOLUTION_SENTENCES,
+  "按季度更新记录",
+  "保留原始单据",
+  "标明统计口径和采集时点",
+  "写清交接节点",
+  "留出申辩渠道",
 ];
 
 const FILLERS = [
@@ -104,17 +109,22 @@ function buildBody(targetNonWs, extras = [], exact = false) {
 }
 
 function buildAudit(mutate = () => {}) {
-  const qualityGates = {};
-  QUALITY_GATES.forEach((name, i) => {
-    qualityGates[name] = { pass: true, evidence: GATE_EVIDENCE[i] };
-  });
+  const scores = DIMENSIONS.map((name, di) => ({
+    name,
+    declaredScore: 10,
+    checkpoints: Array.from({ length: 10 }, (_, ci) => ({
+      result: true,
+      evidence: CHECKPOINT_EVIDENCE[(di + ci) % CHECKPOINT_EVIDENCE.length],
+    })),
+  }));
   const solutionElements = {};
   SOLUTION_KEYS.forEach((key, i) => {
     solutionElements[key] = { evidence: SOLUTION_SENTENCES[i] };
   });
   const audit = {
-    qualityGates,
+    scores,
     solutionElements,
+    averageScore: 10,
     remainingIssues: "无",
     reported: { bodyChars: 3500, nonWhitespaceChars: 3500, dashCount: 0 },
   };
@@ -185,14 +195,14 @@ const cases = [
     key: (p) => `衡量指标.pass=${p.solutionElements["衡量指标"].pass}, 停止或退出条件.pass=${p.solutionElements["停止或退出条件"].pass}`,
   },
   {
-    name: "5. 质量门声明通过但证据无法定位",
+    name: "5. 10个检查点全true但申报分数写9.0",
     fixture: () => ({
       body: buildBody(3800),
-      audit: buildAudit((a) => { a.qualityGates[QUALITY_GATES[0]].evidence = "这句并不存在于正文中"; }),
+      audit: buildAudit((a) => { a.scores[0].declaredScore = 9.0; }),
     }),
     expectPass: false,
-    assert: (p) => p.qualityGates[QUALITY_GATES[0]].pass === false,
-    key: (p) => `${QUALITY_GATES[0]}.pass=${p.qualityGates[QUALITY_GATES[0]].pass}`,
+    assert: (p) => p.scoreMismatches.some((m) => m.dimension === DIMENSIONS[0] && m.recomputed === 10 && m.declared === 9),
+    key: (p) => `${DIMENSIONS[0]} 重算=${p.scoresRecomputed[DIMENSIONS[0]]}, 申报=${p.declaredScores[DIMENSIONS[0]]}`,
   },
   {
     name: "6. 正文含节目名与『第342期』",
@@ -223,19 +233,19 @@ const cases = [
       p.pass === true &&
       p.nonWhitespaceChars >= 3000 &&
       p.nonWhitespaceChars <= 5000 &&
-      QUALITY_GATES.every((g) => p.qualityGates[g].pass === true) &&
-      p.qualityGatePassCount === QUALITY_GATES.length,
-    key: (p) => `nonWhitespaceChars=${p.nonWhitespaceChars}, qualityGatePassCount=${p.qualityGatePassCount}, violations=${p.violations.length}`,
+      DIMENSIONS.every((d) => p.scoresRecomputed[d] >= 9) &&
+      p.averageScore === 10,
+    key: (p) => `nonWhitespaceChars=${p.nonWhitespaceChars}, averageScore=${p.averageScore}, violations=${p.violations.length}`,
   },
   {
-    name: "9.（附加）质量门失败但没有具体原因",
+    name: "9.（附加）申报分数9.3不是二元检查点可得的整数",
     fixture: () => ({
       body: buildBody(3800),
-      audit: buildAudit((a) => { a.qualityGates[QUALITY_GATES[0]] = { pass: false, evidence: GATE_EVIDENCE[0] }; }),
+      audit: buildAudit((a) => { a.scores[0].declaredScore = 9.3; }),
     }),
     expectPass: false,
-    assert: (p) => p.violations.some((v) => v.includes("失败项缺少具体原因")),
-    key: (p) => `${QUALITY_GATES[0]}.pass=${p.qualityGates[QUALITY_GATES[0]].pass}`,
+    assert: (p) => p.violations.some((v) => v.includes("不是 0 至 10 的整数")),
+    key: (p) => `${DIMENSIONS[0]} 申报=${p.declaredScores[DIMENSIONS[0]]}`,
   },
 ];
 

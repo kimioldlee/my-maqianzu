@@ -10,20 +10,24 @@
  * Numbers declared inside the draft or the audit JSON are reported for
  * transparency but are NEVER trusted for gating. JSON is always printed to
  * stdout and, unless --no-write is given, also written to
- * <draft-dir>/final_validation.json. The compatibility --output option is
- * accepted only when it resolves to that exact task-scoped file.
+ * <draft-dir>/final_validation.json (or the --output path).
  */
 
 import fs from "node:fs";
 import path from "node:path";
 
-const QUALITY_GATES = [
-  "事实与归因",
-  "因果与边界",
-  "多方约束",
-  "可执行方案",
-  "口播与去模板",
-  "反驳与风险",
+const DIMENSIONS = [
+  "切入点准确性",
+  "态度冷静度",
+  "数据可信度",
+  "逻辑严密度",
+  "口播化程度",
+  "节目腔调",
+  "观点完整性",
+  "AI痕迹消除",
+  "预判反驳力度",
+  "政治现实感",
+  "幽默恰当性",
 ];
 
 const SOLUTION_KEYS = [
@@ -304,8 +308,8 @@ function checkStageFile(filePath, kind) {
   return status;
 }
 
-function normalizeQualityGates(audit) {
-  const raw = audit?.qualityGates ?? audit?.质量门 ?? {};
+function normalizeScores(audit) {
+  const raw = audit?.scores ?? audit?.scoreCards ?? audit?.评分 ?? [];
   const map = new Map();
   if (Array.isArray(raw)) {
     for (const item of raw) {
@@ -319,7 +323,7 @@ function normalizeQualityGates(audit) {
   return map;
 }
 
-function validate(draftPath, auditPath, violations) {
+function validate(draftPath, auditPath, outputPath, violations) {
   const body = fs.readFileSync(draftPath, "utf8");
   const auditRaw = fs.readFileSync(auditPath, "utf8");
   let audit;
@@ -411,42 +415,91 @@ function validate(draftPath, auditPath, violations) {
     };
   }
 
-  // Six evidence-backed quality gates. These are pass/fail claims, not scores.
-  const gateMap = normalizeQualityGates(audit);
-  const qualityGates = {};
-  for (const gate of QUALITY_GATES) {
-    const entry = gateMap.get(gate);
-    const reasons = [];
-    if (!entry || typeof entry !== "object") {
-      reasons.push("缺少质量门记录");
-      qualityGates[gate] = { declaredPass: null, evidence: "", evidenceFound: false, pass: false, reasons };
-      violations.push(`质量门「${gate}」不合格：${reasons.join("；")}`);
+  // 11 audit dimensions, each with exactly 10 boolean checkpoints.
+  const scoreMap = normalizeScores(audit);
+  const scoresRecomputed = {};
+  const declaredScores = {};
+  const scoreMismatches = [];
+  const scoreDetails = {};
+  for (const dimension of DIMENSIONS) {
+    const entry = scoreMap.get(dimension);
+    if (!entry) {
+      violations.push(`缺少评分维度：${dimension}`);
+      scoresRecomputed[dimension] = null;
       continue;
     }
+    const checkpoints = entry.checkpoints ?? entry.检查点;
+    if (!Array.isArray(checkpoints) || checkpoints.length !== 10) {
+      violations.push(`「${dimension}」检查点不是 10 项（实际 ${Array.isArray(checkpoints) ? checkpoints.length : "非数组"}）`);
+      scoresRecomputed[dimension] = null;
+      continue;
+    }
+    let trueCount = 0;
+    const details = [];
+    for (let i = 0; i < 10; i += 1) {
+      const cp = checkpoints[i];
+      let result;
+      let evidence;
+      let reason;
+      if (typeof cp === "boolean") result = cp;
+      else if (cp && typeof cp === "object") {
+        result = cp.result ?? cp.pass ?? cp.value;
+        if (result === 0 || result === 1) result = Boolean(result);
+        evidence = cp.evidence ?? cp.正文证据 ?? cp.证据;
+        reason = cp.reason ?? cp.失败原因 ?? cp.reasonForFailure;
+      }
+      if (typeof result !== "boolean") {
+        violations.push(`「${dimension}」第 ${i + 1} 个检查点缺少布尔结果`);
+        result = false;
+      }
+      if (result) {
+        trueCount += 1;
+        if (typeof evidence !== "string" || !evidence.trim()) {
+          violations.push(`「${dimension}」第 ${i + 1} 个检查点通过但缺少正文证据`);
+          details.push({ index: i + 1, result: true, evidence: "", evidenceInBody: false });
+        } else {
+          const inBody = body.includes(evidence);
+          const locationReference = /第\s*\d+\s*[段句行]/u.test(evidence);
+          if (!inBody && !locationReference) {
+            violations.push(`「${dimension}」第 ${i + 1} 个检查点的正文证据未出现在 final_draft.md`);
+          }
+          details.push({ index: i + 1, result: true, evidence, evidenceInBody: inBody, locationReference });
+        }
+      } else {
+        if (typeof reason !== "string" || !reason.trim()) {
+          violations.push(`「${dimension}」第 ${i + 1} 个检查点失败但缺少失败原因`);
+        }
+        details.push({ index: i + 1, result: false, reason: typeof reason === "string" ? reason : "" });
+      }
+    }
+    const computed = trueCount; // integer 0..10 by construction
+    scoresRecomputed[dimension] = computed;
+    scoreDetails[dimension] = details;
+    if (computed < 9) violations.push(`「${dimension}」重算得分 ${computed}，低于硬门 9.0`);
 
-    const declaredPass = entry.pass ?? entry.result ?? entry.通过;
-    const evidence = String(entry.evidence ?? entry.正文证据 ?? entry.证据 ?? "").trim();
-    const reason = String(entry.reason ?? entry.失败原因 ?? "").trim();
-    if (typeof declaredPass !== "boolean") reasons.push("pass 必须是布尔值");
-    if (declaredPass !== true) reasons.push("质量门未通过");
-    if (!evidence) reasons.push("通过项缺少正文证据");
-    if (evidence && nonWhitespaceCount(evidence) < 4) reasons.push("证据过短，不足以定位正文");
-    const evidenceFound = evidence.length > 0 && body.includes(evidence);
-    const locationReference = /第\s*\d+\s*[段句行]/u.test(evidence);
-    if (evidence && !evidenceFound && !locationReference) reasons.push("证据未出现在正文，也不是明确位置引用");
-    if (declaredPass === false && !reason) reasons.push("失败项缺少具体原因");
-    if (PLACEHOLDERS.some((p) => evidence.includes(p))) reasons.push("证据含占位符");
+    const declaredRaw = entry.declaredScore ?? entry.score ?? entry.申报分数 ?? entry.declared;
+    declaredScores[dimension] = declaredRaw ?? null;
+    if (declaredRaw === undefined || declaredRaw === null) {
+      violations.push(`「${dimension}」缺少申报分数`);
+    } else if (typeof declaredRaw !== "number" || !Number.isInteger(declaredRaw)) {
+      violations.push(`「${dimension}」申报分数 ${declaredRaw} 不是 0 至 10 的整数（不得填写 9.3、9.5 等）`);
+      scoreMismatches.push({ dimension, declared: declaredRaw, recomputed: computed });
+    } else if (declaredRaw !== computed) {
+      violations.push(`「${dimension}」申报分数 ${declaredRaw} 与重算得分 ${computed} 不一致`);
+      scoreMismatches.push({ dimension, declared: declaredRaw, recomputed: computed });
+    }
+  }
 
-    if (reasons.length) violations.push(`质量门「${gate}」不合格：${reasons.join("；")}`);
-    qualityGates[gate] = {
-      declaredPass: typeof declaredPass === "boolean" ? declaredPass : null,
-      evidence,
-      evidenceFound,
-      locationReference,
-      reason,
-      pass: reasons.length === 0,
-      reasons,
-    };
+  const computedValues = DIMENSIONS.map((d) => scoresRecomputed[d]).filter((v) => typeof v === "number");
+  const averageScore = computedValues.length
+    ? Number((computedValues.reduce((a, b) => a + b, 0) / computedValues.length).toFixed(2))
+    : null;
+  const declaredAverage =
+    audit?.averageScore ?? audit?.overallScore ?? audit?.平均分 ?? audit?.summary?.averageScore ?? null;
+  if (declaredAverage !== null && declaredAverage !== undefined) {
+    if (typeof declaredAverage !== "number" || Math.abs(declaredAverage - averageScore) > 0.011) {
+      violations.push(`申报综合平均分 ${declaredAverage} 与重算 ${averageScore} 不一致`);
+    }
   }
 
   const remainingIssues = audit?.remainingIssues ?? audit?.剩余问题 ?? null;
@@ -487,6 +540,7 @@ function validate(draftPath, auditPath, violations) {
     bodyChars: audit?.bodyChars ?? audit?.reported?.bodyChars ?? audit?.summary?.bodyChars ?? null,
     nonWhitespaceChars: audit?.nonWhitespaceChars ?? audit?.reported?.nonWhitespaceChars ?? null,
     dashCount: audit?.dashCount ?? audit?.reported?.dashCount ?? null,
+    averageScore: declaredAverage ?? null,
     note: "以上数字仅用于对照，硬门一律由验证器从文件真实内容重新计算",
   };
 
@@ -509,17 +563,19 @@ function validate(draftPath, auditPath, violations) {
     templateHits,
     repetitionStats: repetitionStats(body),
     solutionElements,
-    qualityGates,
-    qualityGatePassCount: QUALITY_GATES.filter((gate) => qualityGates[gate]?.pass).length,
+    scoresRecomputed,
+    scoreDetails,
+    averageScore,
+    declaredScores,
+    declaredAverage: declaredAverage ?? null,
+    scoreMismatches,
     stageFiles,
     auditReported,
   };
 }
 
 function main() {
-  const args = parseArgs(process.argv.slice(2));
-  let { draftPath, auditPath } = args;
-  const { output, noWrite, unknown } = args;
+  const { draftPath, auditPath, output, noWrite, unknown } = parseArgs(process.argv.slice(2));
   const violations = [];
   for (const option of unknown) violations.push(`未知参数：${option}`);
 
@@ -534,46 +590,10 @@ function main() {
     violations.push(`找不到 final_audit.json：${auditPath}`);
     result = { violations };
   } else {
-    draftPath = fs.realpathSync.native(path.resolve(draftPath));
-    auditPath = fs.realpathSync.native(path.resolve(auditPath));
-    const taskDir = path.dirname(draftPath);
-    if (path.basename(draftPath) !== "final_draft.md") violations.push("稿件文件名必须是 final_draft.md");
-    if (path.basename(auditPath) !== "final_audit.json") violations.push("审计文件名必须是 final_audit.json");
-    if (path.dirname(auditPath) !== taskDir) violations.push("final_audit.json 必须与 final_draft.md 位于同一任务目录");
-
-    const defaultOutput = path.join(taskDir, "final_validation.json");
-    let outputPath = defaultOutput;
-    if (output) {
-      try {
-        const requested = path.resolve(output);
-        const requestedPath = path.join(
-          fs.realpathSync.native(path.dirname(requested)),
-          path.basename(requested),
-        );
-        if (requestedPath !== defaultOutput) {
-          violations.push("--output 只能指向稿件同目录的 final_validation.json");
-          outputPath = null;
-        }
-      } catch {
-        violations.push("--output 的父目录不存在或不可访问");
-        outputPath = null;
-      }
-    }
-    if (!noWrite && outputPath && fs.existsSync(outputPath)) {
-      const outputStat = fs.lstatSync(outputPath);
-      if (outputStat.isSymbolicLink()) {
-        violations.push("拒绝通过符号链接写入 final_validation.json");
-        outputPath = null;
-      } else if (!outputStat.isFile()) {
-        violations.push("final_validation.json 必须是普通文件");
-        outputPath = null;
-      } else if (outputStat.nlink > 1) {
-        violations.push("拒绝覆盖存在硬链接的 final_validation.json");
-        outputPath = null;
-      }
-    }
+    const defaultOutput = path.join(path.dirname(path.resolve(draftPath)), "final_validation.json");
+    const outputPath = output ? path.resolve(output) : defaultOutput;
     result = {
-      ...validate(draftPath, auditPath, violations),
+      ...validate(draftPath, auditPath, outputPath, violations),
       validationOutputPath: noWrite ? null : outputPath,
     };
   }
@@ -593,16 +613,8 @@ function main() {
   process.stdout.write(json);
   if (!noWrite && payload.validationOutputPath) {
     const target = payload.validationOutputPath;
-    const tempTarget = path.join(
-      path.dirname(target),
-      `.${path.basename(target)}.${process.pid}.${Date.now()}.tmp`,
-    );
-    try {
-      fs.writeFileSync(tempTarget, json, { encoding: "utf8", flag: "wx", mode: 0o600 });
-      fs.renameSync(tempTarget, target);
-    } finally {
-      if (fs.existsSync(tempTarget)) fs.rmSync(tempTarget, { force: true });
-    }
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, json, "utf8");
   }
   process.exitCode = payload.exitCode;
 }

@@ -1,79 +1,39 @@
 #!/bin/bash
+# 马督工思维操作系统 — 安装脚本
+# Usage:
+#   npx degit wsssnmsg/madugong-perspective-skill madugong-perspective
+#   cd madugong-perspective
+#   bash scripts/install.sh
 
-set -euo pipefail
+set -e
 
-usage() {
-  cat <<'EOF'
-Usage:
-  bash scripts/install.sh --personal
-  bash scripts/install.sh --project /absolute/project/path
+echo ""
+echo "🏭 马督工思维操作系统"
+echo "═══════════════════════"
+echo ""
 
-Installs the complete runtime skill. Re-run after updating the source clone.
-EOF
-}
+# 两种模式：
+# 1. 注入 SKILL.md → 编辑 .cursorrules / claude.md / 手动复制
+# 2. 复制所有调研资料到本地
 
-SOURCE_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
-MODE="${1:---personal}"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-case "$MODE" in
-  --personal)
-    [ "$#" -eq 1 ] || { usage; exit 2; }
-    TARGET_ROOT="${HOME}/.claude/skills/madugong-perspective"
-    ;;
-  --project)
-    [ "$#" -eq 2 ] || { usage; exit 2; }
-    PROJECT_ROOT="$(cd "$2" && pwd)"
-    TARGET_ROOT="${PROJECT_ROOT}/.claude/skills/madugong-perspective"
-    ;;
-  -h|--help)
-    usage
-    exit 0
-    ;;
-  *)
-    usage
-    exit 2
-    ;;
-esac
-
-if [ "$SOURCE_ROOT" = "$TARGET_ROOT" ]; then
-  printf 'Skill is already installed at %s\n' "$TARGET_ROOT"
-  exit 0
-fi
-
-if [ -L "$TARGET_ROOT" ]; then
-  printf 'Refusing to install through a symbolic link: %s\n' "$TARGET_ROOT" >&2
-  exit 2
-fi
-
-if [ -e "$TARGET_ROOT/.git" ]; then
-  printf 'Target is a Git clone; update it with git pull --ff-only instead: %s\n' "$TARGET_ROOT" >&2
-  exit 2
-fi
-
-if [ -e "$TARGET_ROOT" ] && [ ! -d "$TARGET_ROOT" ]; then
-  printf 'Target exists and is not a directory: %s\n' "$TARGET_ROOT" >&2
-  exit 2
-fi
-
-mkdir -p "$TARGET_ROOT"
-rsync -a --delete \
-  --exclude '.git/' \
-  --exclude '.github/' \
-  --exclude '.DS_Store' \
-  --exclude '*.tmp' \
-  --exclude 'dist/' \
-  --exclude 'outputs/' \
-  --exclude 'tests/' \
-  --exclude 'scripts/generate_*' \
-  --exclude 'scripts/index_*' \
-  --exclude 'scripts/refresh_*' \
-  --exclude 'scripts/register_*' \
-  --exclude 'scripts/sync_*' \
-  --exclude 'scripts/zhihu/' \
-  --exclude 'sync-local-retrieval.ps1' \
-  --exclude 'scripts/install.sh' \
-  --exclude 'scripts/package_skill.sh' \
-  "$SOURCE_ROOT/" "$TARGET_ROOT/"
-
-printf 'Installed madugong-perspective to %s\n' "$TARGET_ROOT"
-printf 'Restart Claude Code if the skill is not detected immediately.\n'
+echo "📄 SKILL.md 位于: $SCRIPT_DIR/SKILL.md"
+echo ""
+echo "📚 调研资料: $SCRIPT_DIR/references/research/"
+echo ""
+echo "━━━ 使用方式 ━━━"
+echo ""
+echo "1) 注入到 Claude Code:"
+echo "   cp $SCRIPT_DIR/SKILL.md ./CLAUDE.md"
+echo ""
+echo "2) 注入到 Cursor:"
+echo "   cp $SCRIPT_DIR/SKILL.md ./.cursorrules"
+echo ""
+echo "3) 注入到 Windsurf:"
+echo "   cp $SCRIPT_DIR/SKILL.md ./.windsurfrules"
+echo ""
+echo "4) 查看完整示例:"
+echo "   cat $SCRIPT_DIR/examples/usage-examples.md"
+echo ""
+echo "✅ 完成！"

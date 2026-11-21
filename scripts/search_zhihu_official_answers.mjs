@@ -26,46 +26,13 @@ for (let index = 2; index < args.length; index += 1) {
   }
 }
 const terms = query.split(",").map((term) => term.trim()).filter(Boolean);
-
-function resolveDataRoot(input) {
-  const supplied = path.resolve(input);
-  const candidates = [
-    path.join(supplied, "work", "ZhihuOfficial-Answers"),
-    supplied,
-    path.basename(supplied).toLowerCase() === "answers" ? path.dirname(supplied) : null,
-  ].filter(Boolean);
-  for (const candidate of candidates) {
-    const answers = path.join(candidate, "answers");
-    if (fs.existsSync(answers) && fs.lstatSync(answers).isDirectory() && !fs.lstatSync(answers).isSymbolicLink()) {
-      return candidate;
-    }
-  }
-  throw new Error(`Cannot find a real answers directory below: ${supplied}`);
-}
-
-const dataRoot = resolveDataRoot(answerRoot);
-const answersRoot = path.join(dataRoot, "answers");
+const answersRoot = path.join(answerRoot, "answers");
 
 function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const fullPath = path.join(directory, entry.name);
-    if (entry.isSymbolicLink()) throw new Error(`Refusing symbolic link in answer corpus: ${fullPath}`);
-    if (entry.isDirectory()) return walk(fullPath);
-    return entry.isFile() ? [fullPath] : [];
+    return entry.isDirectory() ? walk(fullPath) : [fullPath];
   });
-}
-
-function scalar(value) {
-  const trimmed = value.trim();
-  if (trimmed.startsWith('"')) {
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (typeof parsed === "string") return parsed;
-    } catch {
-      // Preserve legacy, non-JSON YAML values below.
-    }
-  }
-  return trimmed;
 }
 
 function frontMatter(raw) {
@@ -76,7 +43,7 @@ function frontMatter(raw) {
       .split(/\r?\n/)
       .map((line) => line.match(/^([^:]+):\s*(.*)$/))
       .filter(Boolean)
-      .map(([, key, value]) => [key.trim(), scalar(value)]),
+      .map(([, key, value]) => [key.trim(), value.trim()]),
   );
 }
 
@@ -139,7 +106,7 @@ for (const filePath of walk(answersRoot).filter((file) => path.extname(file) ===
     title,
     account: meta.author ?? "马前卒official（睡前消息节目组账号）",
     url: meta.url ?? "",
-    path: path.relative(dataRoot, filePath).replaceAll(path.sep, "/"),
+    path: path.relative(answerRoot, filePath).replaceAll(path.sep, "/"),
     score,
     snippets: terms.map((term) => ({ term, text: snippet(raw, term) })).filter((item) => item.text),
   });
