@@ -60,16 +60,16 @@ const checks = [
       skill.includes("sepia-review → sepia-refactor → sepia-review"),
   ],
   [
-    "初稿生成后立即保存 outputs/final_draft.md",
-    has(skill, "初稿生成后", "立即", "outputs/final_draft.md"),
+    "初稿生成后立即保存 outputs/<task-id>/final_draft.md",
+    has(skill, "初稿生成后", "立即", "outputs/<task-id>/final_draft.md"),
   ],
   [
     "三阶段阶段文件契约齐全",
     has(
       skill,
-      "outputs/sepia_review_1.md",
-      "outputs/sepia_refactor.md",
-      "outputs/sepia_review_2.md"
+      "outputs/<task-id>/sepia_review_1.md",
+      "outputs/<task-id>/sepia_refactor.md",
+      "outputs/<task-id>/sepia_review_2.md"
     ),
   ],
   [
@@ -78,7 +78,7 @@ const checks = [
   ],
   [
     "sepia-refactor 覆盖初稿且不展示修改前后全文",
-    has(skill, "覆盖 outputs/final_draft.md", "不得展示完整修改前正文和修改后正文"),
+    has(skill, "覆盖 outputs/<task-id>/final_draft.md", "不得展示完整修改前正文和修改后正文"),
   ],
   [
     "第二次 sepia-review 只读取修订后的 final_draft.md",
@@ -100,7 +100,7 @@ const checks = [
     "验证器原始 JSON 落盘且只读 pass/exitCode/violations",
     has(
       skill,
-      "outputs/final_validation.json",
+      "outputs/<task-id>/final_validation.json",
       "pass",
       "exitCode",
       "violations",

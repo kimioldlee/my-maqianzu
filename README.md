@@ -110,7 +110,7 @@ curl -LO https://github.com/kimioldlee/my-maqianzu/archive/refs/heads/main.zip
 
 ```powershell
 cd my-maqianzu
-node scripts/search_bedtime_transcripts.mjs . "事件词,机制词" 8 --context-lines 24 --max-chars 24000 --json
+node scripts/search_bedtime_transcripts.mjs . "事件词,机制词" 8 --context-lines 12 --max-chars 12000 --json
 ```
 
 它也接受 `work\BedtimeNews-Transcripts` 或 `contents\ShuiQianXiaoXi` 作为路径。先看片段和行号，再按需要回读单篇原文；只有明确使用 `--full` 时才返回候选全文。完整规则见 [`LOCAL_RETRIEVAL.md`](LOCAL_RETRIEVAL.md)。
@@ -146,39 +146,19 @@ schtasks /Run /TN "MyMaqianzu-WeeklyZhihuSync"
 
 ### 快速使用
 
-安装并启用技能后，用户只需要提供新闻文字、链接、截图或文件。若没有明确说“只要分析”或“只要检索结果”，提交新闻材料并要求按技能或完整流程执行，就会自动进入完整口播稿硬门：资源可读性预检、节目主语料分层检索、当下热点的官方账号补充判断、事实和因果核验、多视角分析、解决方案、去来源元话语、可审计评分以及 Sepia 审校；不要求用户再逐条输入检索命令。
-
-例如：
+安装并启用技能后，用户只需**一次**提交新闻文字、链接、截图或文件并说明「按技能执行完整流程」；除非明确说「只要分析」或「只要检索结果」，Agent 自动完成七步流程，不要求逐步输入命令。推荐调用句：
 
 ```
-这是新闻材料。请按 madugong-perspective 技能执行完整流程并交付最终单人演播稿：使用本地低 Token 全文检索，优先检索《睡前消息》主语料，必要时补充马前卒official或知乎回答；核验当前事实、数字、法律政策和因果链，区分节目观点、官方账号直接回应、官方账号补充、当前事实和框架推演；给出包含执行主体、资金或权限、受影响方补偿、过渡或试点、指标、退出条件的解决方案。正文去除节目名、期数、来源元话语、破折号和无必要的人名及关键词重复，不用提纲小标题。自动依次执行 sepia-review、sepia-refactor、sepia-review，并交付可审计评分表、验证记录和核查附录；没有真实工具返回或任一硬门失败时，不得称为最终稿。
+这是新闻材料。请按项目 SKILL.md 执行 madugong-perspective 完整流程，并交付最终单人演播稿。
 ```
 
-调用提示中的“验证失败”“硬门失败”或“停止”只指技术性失败：资源不可读、检索器无法运行、搜索根目录错误、命中原文无法回读，或 Sepia 没有真实返回。检索器正常但当前话题零命中属于 `corpus_available + direct_hit_count=0`，技能会拆词分别检索事件词、主体词、机制词和近义词，再查机制相似节目、较晚节目及马前卒official/知乎语料；即使最终仍无直接命中，也会基于核验过的当前事实继续分析和成稿，并把判断标为“当前事实”“基于节目框架的推演”或“本助手补充判断”，不会标记 `corpus_failed` 或停止流程。
+所有流程、来源层级与归因、低 Token 检索、`direct_hit_count=0` 不等于 `corpus_failed`、方案六要素、3000 至 5000 字、固定 Sepia 三阶段、11 项评分、终稿验证器与中断续跑规则的**唯一权威定义**都在 [`SKILL.md`](SKILL.md)，这里不重复。`sepia-recreate`/`sepia-write` 的禁用与替换条件、`sepia_call_failed` 判定、验证器命令与 `pass=true` 判定同样以 SKILL.md 为准。
 
-关于 Sepia：用户只需一次提交新闻材料和完整流程要求，Agent 就会自动连续编排 `sepia-review -> sepia-refactor -> sepia-review`，分别产出对初稿的诊断、修改后的完整正文与实际修改记录、以及对修改稿的复查记录。调用时出现的 “Launching skill”、“Loaded a skill”、“Got the result” 或 SKILL.md 加载确认只是技能加载确认，不是诊断结果，也不代表失败；加载后 Agent 必须立即继续执行三个阶段，用户不需要再次调用、逐步点击或输入 `/sepia-review`、`/sepia-refactor`。Sepia 结果是当前 Agent 依据 Sepia 技能完成的审校，不是独立第三方测评或客观认证；只有明确的技能无法加载、SKILL.md 不可读、工具报错、Agent 无法按已加载规则执行，或阶段未产出诊断/修改稿/复查记录等真正执行错误，才标记 `sepia_call_failed`。
+完整审计数据（评分表、验证记录、核查附录、验证器原始 JSON）一律保存到本次任务的 `outputs/<task-id>/` 目录；对话交付只报必要摘要，不重复输出正文、完整 JSON 或多篇全文。只有用户需要发布配套内容或明确要求时，才额外生成推荐标题、备选标题、B 站标签和简介；用户明确要求的内容不得因摘要而漏掉。
 
-关于终稿验证：用户仍然只需提交一次新闻材料，不需要逐步调用 Sepia 或验证器。最终稿正文独立保存为 `outputs/final_draft.md`，审计数据保存为 `outputs/final_audit.json`；交付前 Agent 会运行 `node scripts/validate_final_draft.mjs outputs/final_draft.md outputs/final_audit.json --json`，并保存原始 JSON 与退出码。验证器从文件真实内容重新计算字数、破折号、节目名/期数、占位符、方案六要素正文证据和 11 项评分；评分由每项 10 个 0/1 二元检查点重算，单项分数只能是 0 至 10 的整数，综合平均分可为小数但必须由 11 项实际得分计算。只有验证器返回 `pass=true` 且退出码 0，才会标记为最终稿；验证失败时 Agent 依据 `violations` 自动修改并复检，不要求用户逐项纠错。验证器测试用例见 `tests/validate_final_draft.test.mjs`。
+### 上下文预算与中断恢复（操作入口，规则以 SKILL.md 为准）
 
-技能会优先检索“电价、能源、输配电、补贴、维护”等直接词和机制词，回读有限的相关原文，再核验当前调价文件。最终会区分节目明确观点、官方账号回应或补充、当前事实和助手推演；若某项资源未实际可读，会如实说明；若检索器正常但话题零命中，会如实记录扫描文件数与零命中事实并继续补充检索。完整流程和边界见 [`SKILL.md`](SKILL.md)。
-
-### 上下文预算与中断恢复
-
-完整流程以 `outputs/` 中的文件为准，正文不反复进入对话上下文：
-
-| 阶段 | 输入 | 输出 |
-|---|---|---|
-| 初稿 | — | `outputs/final_draft.md`（生成后立即保存） |
-| `sepia-review` 第一次 | `final_draft.md` | `outputs/sepia_review_1.md`（只回传精简问题类型、正文位置、修改计划） |
-| `sepia-refactor` | `final_draft.md` + `sepia_review_1.md` | 覆盖 `final_draft.md`；修改记录存 `outputs/sepia_refactor.md` |
-| `sepia-review` 第二次 | 修订后的 `final_draft.md` | `outputs/sepia_review_2.md` |
-| 终稿验证 | `final_draft.md` + `final_audit.json` | `outputs/final_validation.json`（Agent 只读 `pass`、`exitCode`、`violations` 和必要计数） |
-
-- Sepia 顺序固定为 `sepia-review → sepia-refactor → sepia-review`；**未经用户明确要求完全重写，禁止自动改用 `sepia-recreate` 或 `sepia-write`**。
-- 检索只保留最相关 1 至 3 篇的必要片段；大型文件分段或定点读取；不重复回读同一篇全文，不把检索器完整 JSON、完整索引、摘要、审计 JSON 或大型工具输出写入模型上下文；三个阶段均不在对话中重复展示完整修改前正文和修改后正文。
-- 若出现 `Autocompact is thrashing`、`context limit`、上下文压缩失败或类似错误，Agent 会立即停止加载技能与大型文件、保留所有 `outputs/` 文件、输出可在新会话直接使用的恢复提示，且**不从头重跑**检索和生成流程。
-- 断点续跑：若 `outputs/` 已有 `final_draft.md` 或阶段文件，只继续缺失阶段，不重复已完成且有效的预检、检索、事实核验和 Sepia 阶段。
-- 完整硬规则见 [`SKILL.md`](SKILL.md) 的「上下文预算与中断恢复硬规则」；只读静态检查见 [`tests/context_budget_rules.test.mjs`](tests/context_budget_rules.test.mjs)。
+文件一律落在 `outputs/<task-id>/<文件名>`；六个产物、task-id 生命周期、覆盖边界、恢复提示与断点续跑规则均以 [`SKILL.md`](SKILL.md) 为唯一权威定义，这里不重复。验证器命令形如 `node scripts/validate_final_draft.mjs outputs/<task-id>/final_draft.md outputs/<task-id>/final_audit.json --json`，`final_validation.json` 写在同一任务目录；Agent 只读 `pass`、`exitCode`、`violations` 和必要计数。出现 `Autocompact is thrashing`、`context limit` 或上下文压缩失败时的中断恢复模板、Sepia 顺序与 `sepia-recreate`/`sepia-write` 禁用条件同样见 SKILL.md。只读静态检查见 [`tests/context_budget_rules.test.mjs`](tests/context_budget_rules.test.mjs)。
 
 > 更多示例见 `examples/usage-examples.md`
 
@@ -224,16 +204,22 @@ madugong-perspective-skill/
 │   ├── zhihu/                  # 可复跑抓取、转写脚本（不含登录态）
 │   └── install.sh               # 可选安装脚本
 ├── tests/
-│   ├── validate_final_draft.test.mjs  # 验证器测试用例/夹具
-│   └── context_budget_rules.test.mjs  # 上下文预算/中断恢复只读静态检查
+│   ├── validate_final_draft.test.mjs      # 验证器测试用例/夹具
+│   ├── context_budget_rules.test.mjs      # 上下文预算/中断恢复只读静态检查
+│   ├── corpus_status_regression.test.mjs  # 语料状态判定回归（技能更新时运行）
+│   ├── skill_contract_rules.test.mjs      # SKILL.md / README.md 静态契约断言
+│   └── task_output_dir.test.mjs           # 任务目录路径与既有文件保护集成测试
 └── outputs/                     # 运行产物（已在 .gitignore 中忽略，不入库）
-    ├── final_draft.md           # 初稿 / 修订后的终稿正文
-    ├── final_audit.json         # 方案六要素证据与 11 项评分
-    ├── sepia_review_1.md        # 第一次 sepia-review 诊断
-    ├── sepia_refactor.md        # sepia-refactor 修改记录
-    ├── sepia_review_2.md        # 第二次 sepia-review 复查
-    └── final_validation.json    # 验证器原始 JSON
+    └── <task-id>/              # 仅全新新闻任务才新建；同任务续跑/修订沿用原 task-id
+        ├── final_draft.md       # 初稿 / 修订后的终稿正文
+        ├── final_audit.json     # 方案六要素证据与 11 项评分
+        ├── sepia_review_1.md    # 第一次 sepia-review 诊断
+        ├── sepia_refactor.md    # sepia-refactor 修改记录
+        ├── sepia_review_2.md    # 第二次 sepia-review 复查
+        └── final_validation.json # 验证器原始 JSON（写在同目录）
 ```
+
+每个任务目录固定 6 个文件（`outputs/<task-id>/<文件名>`）；覆盖边界见 SKILL.md。只有用户明确要求额外交付物时，才可新建其他文件并说明用途。
 
 ---
 
