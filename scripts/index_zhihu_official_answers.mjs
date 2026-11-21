@@ -11,6 +11,10 @@ if (!answerRoot || !outputPath) {
 }
 
 const answersRoot = path.join(answerRoot, "answers");
+const answersRootStat = fs.lstatSync(answersRoot);
+if (!answersRootStat.isDirectory() || answersRootStat.isSymbolicLink()) {
+  throw new Error(`Answer corpus must be a real directory: ${answersRoot}`);
+}
 const topicLexicon = {
   fiscal: ["财政", "税收", "转移支付", "地方债", "城投", "预算", "债务"],
   housing: ["房价", "房地产", "土地财政", "房产税", "公积金", "烂尾楼", "保交楼"],
@@ -34,8 +38,23 @@ const topicLexicon = {
 function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const fullPath = path.join(directory, entry.name);
-    return entry.isDirectory() ? walk(fullPath) : [fullPath];
+    if (entry.isSymbolicLink()) throw new Error(`Refusing symbolic link in answer corpus: ${fullPath}`);
+    if (entry.isDirectory()) return walk(fullPath);
+    return entry.isFile() ? [fullPath] : [];
   });
+}
+
+function scalar(value) {
+  const trimmed = value.trim();
+  if (trimmed.startsWith('"')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (typeof parsed === "string") return parsed;
+    } catch {
+      // Preserve legacy, non-JSON YAML values below.
+    }
+  }
+  return trimmed;
 }
 
 function frontMatter(raw) {
@@ -46,8 +65,29 @@ function frontMatter(raw) {
       .split(/\r?\n/)
       .map((line) => line.match(/^([^:]+):\s*(.*)$/))
       .filter(Boolean)
-      .map(([, key, value]) => [key.trim(), value.trim()]),
+      .map(([, key, value]) => [key.trim(), scalar(value)]),
   );
+}
+
+function writeAtomic(filePath, content) {
+  const resolved = path.resolve(filePath);
+  fs.mkdirSync(path.dirname(resolved), { recursive: true });
+  if (fs.existsSync(resolved)) {
+    const target = fs.lstatSync(resolved);
+    if (!target.isFile() || target.isSymbolicLink() || target.nlink !== 1) {
+      throw new Error(`Output must be a regular single-link file: ${resolved}`);
+    }
+  }
+  const temporary = path.join(
+    path.dirname(resolved),
+    `.${path.basename(resolved)}.${process.pid}.${Date.now()}.tmp`,
+  );
+  try {
+    fs.writeFileSync(temporary, content, { encoding: "utf8", flag: "wx", mode: 0o600 });
+    fs.renameSync(temporary, resolved);
+  } finally {
+    fs.rmSync(temporary, { force: true });
+  }
 }
 
 function firstSentence(raw) {
@@ -114,6 +154,5 @@ const index = {
   answers,
 };
 
-fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-fs.writeFileSync(outputPath, `${JSON.stringify(index)}\n`, "utf8");
+writeAtomic(outputPath, `${JSON.stringify(index)}\n`);
 console.log(`Indexed ${answers.length} Zhihu official answers.`);

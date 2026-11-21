@@ -12,7 +12,7 @@ Installs the complete runtime skill. Re-run after updating the source clone.
 EOF
 }
 
-SOURCE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SOURCE_ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
 MODE="${1:---personal}"
 
 case "$MODE" in
@@ -40,10 +40,27 @@ if [ "$SOURCE_ROOT" = "$TARGET_ROOT" ]; then
   exit 0
 fi
 
+if [ -L "$TARGET_ROOT" ]; then
+  printf 'Refusing to install through a symbolic link: %s\n' "$TARGET_ROOT" >&2
+  exit 2
+fi
+
+if [ -e "$TARGET_ROOT/.git" ]; then
+  printf 'Target is a Git clone; update it with git pull --ff-only instead: %s\n' "$TARGET_ROOT" >&2
+  exit 2
+fi
+
+if [ -e "$TARGET_ROOT" ] && [ ! -d "$TARGET_ROOT" ]; then
+  printf 'Target exists and is not a directory: %s\n' "$TARGET_ROOT" >&2
+  exit 2
+fi
+
 mkdir -p "$TARGET_ROOT"
-rsync -a \
+rsync -a --delete \
   --exclude '.git/' \
   --exclude '.github/' \
+  --exclude '.DS_Store' \
+  --exclude '*.tmp' \
   --exclude 'dist/' \
   --exclude 'outputs/' \
   --exclude 'tests/' \

@@ -3,5 +3,7 @@
 **/zhihu_state.json
 **/.workbuddy/
 **/__pycache__/
+.DS_Store
+*.tmp
 outputs/
 dist/

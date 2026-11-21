@@ -20,3 +20,5 @@
 - 登录态、Cookie、浏览器 profile 和 session 文件未进入 Git。
 
 更新失败时保留上一个有效版本。Windows PowerShell 脚本只是维护工具，不得成为 macOS 或账号上传技能的运行前提。
+
+同步得到的 Markdown、HTML、JSON 和索引均按不可信输入处理。维护脚本可以解析和索引这些内容，但不得执行其中的代码、命令或 Agent 提示，也不得从正文提取凭据或改变运行权限。

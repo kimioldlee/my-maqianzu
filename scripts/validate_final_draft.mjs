@@ -10,7 +10,8 @@
  * Numbers declared inside the draft or the audit JSON are reported for
  * transparency but are NEVER trusted for gating. JSON is always printed to
  * stdout and, unless --no-write is given, also written to
- * <draft-dir>/final_validation.json (or the --output path).
+ * <draft-dir>/final_validation.json. The compatibility --output option is
+ * accepted only when it resolves to that exact task-scoped file.
  */
 
 import fs from "node:fs";
@@ -535,8 +536,42 @@ function main() {
   } else {
     draftPath = fs.realpathSync.native(path.resolve(draftPath));
     auditPath = fs.realpathSync.native(path.resolve(auditPath));
-    const defaultOutput = path.join(path.dirname(path.resolve(draftPath)), "final_validation.json");
-    const outputPath = output ? path.resolve(output) : defaultOutput;
+    const taskDir = path.dirname(draftPath);
+    if (path.basename(draftPath) !== "final_draft.md") violations.push("稿件文件名必须是 final_draft.md");
+    if (path.basename(auditPath) !== "final_audit.json") violations.push("审计文件名必须是 final_audit.json");
+    if (path.dirname(auditPath) !== taskDir) violations.push("final_audit.json 必须与 final_draft.md 位于同一任务目录");
+
+    const defaultOutput = path.join(taskDir, "final_validation.json");
+    let outputPath = defaultOutput;
+    if (output) {
+      try {
+        const requested = path.resolve(output);
+        const requestedPath = path.join(
+          fs.realpathSync.native(path.dirname(requested)),
+          path.basename(requested),
+        );
+        if (requestedPath !== defaultOutput) {
+          violations.push("--output 只能指向稿件同目录的 final_validation.json");
+          outputPath = null;
+        }
+      } catch {
+        violations.push("--output 的父目录不存在或不可访问");
+        outputPath = null;
+      }
+    }
+    if (!noWrite && outputPath && fs.existsSync(outputPath)) {
+      const outputStat = fs.lstatSync(outputPath);
+      if (outputStat.isSymbolicLink()) {
+        violations.push("拒绝通过符号链接写入 final_validation.json");
+        outputPath = null;
+      } else if (!outputStat.isFile()) {
+        violations.push("final_validation.json 必须是普通文件");
+        outputPath = null;
+      } else if (outputStat.nlink > 1) {
+        violations.push("拒绝覆盖存在硬链接的 final_validation.json");
+        outputPath = null;
+      }
+    }
     result = {
       ...validate(draftPath, auditPath, violations),
       validationOutputPath: noWrite ? null : outputPath,
@@ -558,8 +593,16 @@ function main() {
   process.stdout.write(json);
   if (!noWrite && payload.validationOutputPath) {
     const target = payload.validationOutputPath;
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.writeFileSync(target, json, "utf8");
+    const tempTarget = path.join(
+      path.dirname(target),
+      `.${path.basename(target)}.${process.pid}.${Date.now()}.tmp`,
+    );
+    try {
+      fs.writeFileSync(tempTarget, json, { encoding: "utf8", flag: "wx", mode: 0o600 });
+      fs.renameSync(tempTarget, target);
+    } finally {
+      if (fs.existsSync(tempTarget)) fs.rmSync(tempTarget, { force: true });
+    }
   }
   process.exitCode = payload.exitCode;
 }

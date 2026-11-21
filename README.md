@@ -149,7 +149,7 @@ node scripts/search_bedtime_transcripts.mjs . \
 ```bash
 node scripts/search_zhihu_official_answers.mjs . \
   "事件词,机制词" 8 \
-  --context-lines 12 --max-chars 12000 --json
+  --max-chars 12000
 ```
 
 索引负责定位，不能代替正文证据。零命中不等于语料失败；只有资源不可读、检索器报错、根目录错误或命中原文无法回读时才标记 `corpus_failed`。
@@ -172,6 +172,11 @@ node --test tests/*.test.mjs
 - `corpus_status_regression.test.mjs`：零命中与技术失败分类。
 - `skill_contract_rules.test.mjs`：入口、参考路由和安装契约。
 - `context_budget_rules.test.mjs`：上下文预算与恢复规则。
+- `corpus_index_outputs.test.mjs`：语料索引、摘要输出与符号链接保护。
+- `package_skill.test.mjs`：外部工作目录打包、ZIP 完整性与源码树写入保护。
+- `zhihu_to_md.test.mjs`：知乎转换的安全引用、失败保留和暂存清理。
+- `install.test.mjs`：安装更新、过期文件清理和符号链接保护。
+- `sync_bedtime_transcripts.test.mjs`：公开文字稿同步的完整校验和失败保留。
 
 语料同步和索引重建属于维护流程，不会在每次新闻任务中自动运行。知乎登录态、Cookie、浏览器 profile 和 session 文件不得提交到 Git。
 

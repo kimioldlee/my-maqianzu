@@ -338,6 +338,45 @@ add(
   fs.readdirSync(outputsRoot).sort().join(",")
 );
 
+const escapedOutput = path.join(root, "escaped-validation.json");
+const runEscaped = spawnSync(process.execPath, [
+  VALIDATOR, draftA, auditA, "--json", "--output", escapedOutput,
+], { cwd: REPO, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 });
+let payloadEscaped = null;
+try { payloadEscaped = JSON.parse(runEscaped.stdout); } catch { payloadEscaped = null; }
+add(
+  "--output 不能把验证结果写出当前任务目录",
+  runEscaped.status === 1 && payloadEscaped?.pass === false &&
+    payloadEscaped?.validationOutputPath === null && !fs.existsSync(escapedOutput) &&
+    payloadEscaped?.violations?.some((item) => item.includes("--output 只能指向")),
+  `exit=${runEscaped.status} path=${payloadEscaped?.validationOutputPath}`
+);
+
+const symlinkTask = path.join(root, "symlink-task");
+fs.cpSync(taskA, symlinkTask, { recursive: true });
+const symlinkOutput = path.join(symlinkTask, "final_validation.json");
+const symlinkSentinel = path.join(root, "symlink-sentinel.json");
+const sentinelText = '{"owner":"outside-task"}\n';
+fs.rmSync(symlinkOutput, { force: true });
+fs.writeFileSync(symlinkSentinel, sentinelText, "utf8");
+fs.symlinkSync(symlinkSentinel, symlinkOutput);
+const runSymlink = spawnSync(process.execPath, [
+  VALIDATOR,
+  path.join(symlinkTask, "final_draft.md"),
+  path.join(symlinkTask, "final_audit.json"),
+  "--json",
+], { cwd: REPO, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 });
+let payloadSymlink = null;
+try { payloadSymlink = JSON.parse(runSymlink.stdout); } catch { payloadSymlink = null; }
+add(
+  "拒绝通过 final_validation.json 符号链接覆盖任务目录外文件",
+  runSymlink.status === 1 && payloadSymlink?.validationOutputPath === null &&
+    payloadSymlink?.violations?.some((item) => item.includes("符号链接")) &&
+    fs.readFileSync(symlinkSentinel, "utf8") === sentinelText &&
+    fs.lstatSync(symlinkOutput).isSymbolicLink(),
+  `exit=${runSymlink.status} sentinel=${fs.readFileSync(symlinkSentinel, "utf8").trim()}`
+);
+
 fs.rmSync(root, { recursive: true, force: true });
 
 let failed = 0;

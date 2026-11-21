@@ -37,16 +37,30 @@ JS = """async (api) => {
 
 def main() -> None:
     DATA_ROOT.mkdir(parents=True, exist_ok=True)
-    limit = int(sys.argv[1]) if len(sys.argv) > 1 else 20
+    if len(sys.argv) > 2:
+        raise SystemExit("用法：python zhihu_fetch_all.py [每页条数，1-100]")
+    try:
+        limit = int(sys.argv[1]) if len(sys.argv) > 1 else 20
+    except ValueError as exc:
+        raise SystemExit("每页条数必须是 1-100 的整数") from exc
+    if not 1 <= limit <= 100:
+        raise SystemExit("每页条数必须在 1-100 之间")
     records = {}
     if OUT.exists():
-        for line in OUT.read_text(encoding="utf-8").splitlines():
-            if line.strip():
-                try:
-                    rec = json.loads(line)
-                    records[str(rec["id"])] = rec
-                except Exception:
-                    pass
+        for line_number, line in enumerate(OUT.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.strip():
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise RuntimeError(
+                    f"现有原始语料第 {line_number} 行不是有效 JSON；为避免丢失旧记录，本次停止写入。"
+                ) from exc
+            if not isinstance(rec, dict) or not str(rec.get("id") or "").strip().isdigit():
+                raise RuntimeError(
+                    f"现有原始语料第 {line_number} 行缺少回答 ID；为避免丢失旧记录，本次停止写入。"
+                )
+            records[str(rec["id"])] = rec
     print(f"已有 {len(records)} 条，检查新增和更新。", flush=True)
 
     with sync_playwright() as p:
@@ -78,6 +92,8 @@ def main() -> None:
                 total = data.get("paging", {}).get("totals")
                 print(f"总量：{total}", flush=True)
             items = data.get("data", [])
+            if not isinstance(items, list):
+                raise RuntimeError(f"知乎 API 在 offset={offset} 返回的 data 不是数组；原始语料未改写。")
             if not items:
                 if data.get("paging", {}).get("is_end"):
                     print("已到末页。", flush=True)
@@ -86,7 +102,11 @@ def main() -> None:
 
             page_added = page_updated = 0
             for it in items:
+                if not isinstance(it, dict) or not str(it.get("id") or "").strip().isdigit():
+                    raise RuntimeError(f"知乎 API 在 offset={offset} 返回缺少回答 ID 的记录；原始语料未改写。")
                 q = it.get("question") or {}
+                if not isinstance(q, dict) or not str(q.get("id") or "").strip().isdigit():
+                    raise RuntimeError(f"知乎 API 在 offset={offset} 返回缺少问题 ID 的记录；原始语料未改写。")
                 rec = {
                     "id": str(it.get("id")),
                     "question_id": q.get("id"),

@@ -9,7 +9,40 @@ if (!indexPath || !outputPath) {
   process.exit(1);
 }
 
-const index = JSON.parse(fs.readFileSync(indexPath, "utf8"));
+function readRegularFile(filePath, label) {
+  const resolved = path.resolve(filePath);
+  const target = fs.lstatSync(resolved);
+  if (!target.isFile() || target.isSymbolicLink()) {
+    throw new Error(`${label} must be a regular file: ${resolved}`);
+  }
+  return fs.readFileSync(resolved, "utf8");
+}
+
+function writeAtomic(filePath, content) {
+  const resolved = path.resolve(filePath);
+  fs.mkdirSync(path.dirname(resolved), { recursive: true });
+  if (fs.existsSync(resolved)) {
+    const target = fs.lstatSync(resolved);
+    if (!target.isFile() || target.isSymbolicLink() || target.nlink !== 1) {
+      throw new Error(`Output must be a regular single-link file: ${resolved}`);
+    }
+  }
+  const temporary = path.join(
+    path.dirname(resolved),
+    `.${path.basename(resolved)}.${process.pid}.${Date.now()}.tmp`,
+  );
+  try {
+    fs.writeFileSync(temporary, content, { encoding: "utf8", flag: "wx", mode: 0o600 });
+    fs.renameSync(temporary, resolved);
+  } finally {
+    fs.rmSync(temporary, { force: true });
+  }
+}
+
+const index = JSON.parse(readRegularFile(indexPath, "Index input"));
+if (!Array.isArray(index.episodes) || !Array.isArray(index.supplements) || typeof index.coverage !== "object" || index.coverage === null) {
+  throw new Error("Index input is missing required episodes, supplements, or coverage fields.");
+}
 const documents = [...index.episodes, ...index.supplements];
 const clean = (value = "") => String(value).replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
 const list = (values = []) => values.map(clean).filter(Boolean).join("、") || "-";
@@ -44,6 +77,5 @@ for (const document of documents) {
   lines.push(`| ${clean(id)} | ${clean(document.date)} | ${clean(document.title)} | ${list(document.topics)} | ${list([...(document.sections ?? []).slice(0, 8), ...questions])} | ${list(document.referencedEpisodes)} | ${flags(document.appendixFlags)} | ${markerText} | ${clean(document.opening)} |`);
 }
 
-fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-fs.writeFileSync(outputPath, `${lines.join("\n")}\n`, "utf8");
+writeAtomic(outputPath, `${lines.join("\n")}\n`);
 console.log(`Generated ${documents.length} digest rows.`);

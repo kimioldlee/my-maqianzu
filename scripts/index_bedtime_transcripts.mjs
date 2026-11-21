@@ -12,6 +12,10 @@ if (!repoRoot || !outputPath) {
 }
 
 const transcriptRoot = path.join(repoRoot, "contents", "ShuiQianXiaoXi");
+const transcriptRootStat = fs.lstatSync(transcriptRoot);
+if (!transcriptRootStat.isDirectory() || transcriptRootStat.isSymbolicLink()) {
+  throw new Error(`Transcript corpus must be a real directory: ${transcriptRoot}`);
+}
 const catalogUrl = "https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi";
 const legacySourceUrl = "https://bedtimenewsstudio.github.io/BedtimeNews-Transcripts/contents/ShuiQianXiaoXi/";
 const episodeName = /^\d{4}(?:\.\d+)?\.md$/;
@@ -38,8 +42,31 @@ const topicLexicon = {
 function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const fullPath = path.join(directory, entry.name);
-    return entry.isDirectory() ? walk(fullPath) : [fullPath];
+    if (entry.isSymbolicLink()) throw new Error(`Refusing symbolic link in transcript corpus: ${fullPath}`);
+    if (entry.isDirectory()) return walk(fullPath);
+    return entry.isFile() ? [fullPath] : [];
   });
+}
+
+function writeAtomic(filePath, content) {
+  const resolved = path.resolve(filePath);
+  fs.mkdirSync(path.dirname(resolved), { recursive: true });
+  if (fs.existsSync(resolved)) {
+    const target = fs.lstatSync(resolved);
+    if (!target.isFile() || target.isSymbolicLink() || target.nlink !== 1) {
+      throw new Error(`Output must be a regular single-link file: ${resolved}`);
+    }
+  }
+  const temporary = path.join(
+    path.dirname(resolved),
+    `.${path.basename(resolved)}.${process.pid}.${Date.now()}.tmp`,
+  );
+  try {
+    fs.writeFileSync(temporary, content, { encoding: "utf8", flag: "wx", mode: 0o600 });
+    fs.renameSync(temporary, resolved);
+  } finally {
+    fs.rmSync(temporary, { force: true });
+  }
 }
 
 function countMatches(text, pattern) {
@@ -171,6 +198,5 @@ const index = {
   supplements,
 };
 
-fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-fs.writeFileSync(outputPath, `${JSON.stringify(index)}\n`, "utf8");
+writeAtomic(outputPath, `${JSON.stringify(index)}\n`);
 console.log(`Indexed ${episodes.length} transcript documents through episode ${highestEpisodeNumber}.`);
