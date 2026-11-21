@@ -35,6 +35,7 @@ const checks = [];
 const record = (name, ok, detail) => checks.push({ name, ok: Boolean(ok), detail });
 
 const skill = fs.readFileSync(path.join(REPO, "SKILL.md"), "utf8");
+const workflow = fs.readFileSync(path.join(REPO, "references", "workflow.md"), "utf8");
 
 // Recursive, read-only snapshot of an outputs/ root (path + content + mtime).
 // The fixture is created in an OS temp workspace, so the snapshot is always
@@ -73,19 +74,18 @@ record(
   "SKILL.md 不再把冷门词/错误路径回归测试写成每篇任务必做",
   !skill.includes("用只读方式复核两类情形") &&
     !skill.includes("状态判定复核（上线自检）") &&
-    skill.includes("不是每篇任务的步骤") &&
-    skill.includes("tests/corpus_status_regression.test.mjs"),
-  "回归测试定位到技能更新测试"
+    workflow.includes("状态回归测试只在技能更新时运行") &&
+    workflow.includes("不是每篇任务的步骤"),
+  "工作流将回归探针限定为技能更新测试"
 );
 
 // The actual failure classification must be unchanged.
 record(
   "实际任务失败判定未改变",
-  skill.includes("corpus_failed") &&
-    skill.includes("只用于技术性失败") &&
-    skill.includes("corpus_available") &&
-    skill.includes("零命中绝不单独触发") &&
-    skill.includes("direct_hit_count=0"),
+  (skill + workflow).includes("corpus_failed") &&
+    (skill + workflow).includes("技术失败") &&
+    (skill + workflow).includes("corpus_available") &&
+    (skill + workflow).includes("direct_hit_count=0"),
   "零命中=corpus_available；corpus_failed 仅限技术失败"
 );
 

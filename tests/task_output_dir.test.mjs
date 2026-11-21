@@ -12,7 +12,7 @@
  * other task or pre-existing files in the outputs/ root.
  *
  * SCOPE LIMIT (important): this is a FILE-LEVEL integration test. It verifies
- * path-parameter compatibility, exact per-task file sets, and protection of
+ * path-parameter compatibility, required per-task files, and protection of
  * pre-existing files when the same task directory is reused. It does NOT and
  * CANNOT verify the Agent's session-level behaviour of choosing / reusing a
  * task-id: the validator never generates or selects task-id; that choice is
@@ -37,9 +37,9 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, "..");
 const VALIDATOR = path.join(REPO, "scripts", "validate_final_draft.mjs");
 
-const DIMENSIONS = [
-  "切入点准确性", "态度冷静度", "数据可信度", "逻辑严密度", "口播化程度",
-  "节目腔调", "观点完整性", "AI痕迹消除", "预判反驳力度", "政治现实感", "幽默恰当性",
+const QUALITY_GATES = [
+  "事实与归因", "因果与边界", "多方约束",
+  "可执行方案", "口播与去模板", "反驳与风险",
 ];
 const SOLUTION_KEYS = [
   "执行主体", "权限或资金来源", "受影响方及补偿", "试点或过渡安排", "衡量指标", "停止或退出条件",
@@ -51,14 +51,6 @@ const SOLUTION_SENTENCES = [
   "先在两个城区开展六个月试点再逐步扩大范围",
   "以月度投诉量和办结率作为主要衡量指标",
   "若连续三个月指标未改善则停止试点并退出",
-];
-const CHECKPOINT_EVIDENCE = [
-  ...SOLUTION_SENTENCES,
-  "按季度更新记录",
-  "保留原始单据",
-  "标明统计口径和采集时点",
-  "写清交接节点",
-  "留出申辩渠道",
 ];
 const FILLERS = [
   "相关单位需要把基础台账核对清楚，并按季度更新记录，保证每个环节都有凭证可查。",
@@ -117,22 +109,17 @@ function buildBody(target, marker) {
 }
 
 function buildAudit() {
-  const scores = DIMENSIONS.map((name, di) => ({
-    name,
-    declaredScore: 10,
-    checkpoints: Array.from({ length: 10 }, (_, ci) => ({
-      result: true,
-      evidence: CHECKPOINT_EVIDENCE[(di + ci) % CHECKPOINT_EVIDENCE.length],
-    })),
-  }));
+  const qualityGates = {};
+  QUALITY_GATES.forEach((name, i) => {
+    qualityGates[name] = { pass: true, evidence: SOLUTION_SENTENCES[i] };
+  });
   const solutionElements = {};
   SOLUTION_KEYS.forEach((key, i) => {
     solutionElements[key] = { evidence: SOLUTION_SENTENCES[i] };
   });
   return {
-    scores,
+    qualityGates,
     solutionElements,
-    averageScore: 10,
     remainingIssues: "无",
     reported: { bodyChars: 3500, nonWhitespaceChars: 3500, dashCount: 0 },
   };
@@ -160,12 +147,13 @@ const snapshotTree = (dir) => {
   walk(dir, "");
   return entries.sort();
 };
-const SIX_FILES = [
+const REQUIRED_FILES = [
   "final_draft.md", "final_audit.json", "sepia_review_1.md",
   "sepia_refactor.md", "sepia_review_2.md", "final_validation.json",
 ];
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "task-output-dir-"));
+const canonical = (value) => fs.realpathSync.native(path.resolve(value));
 const outputsRoot = path.join(root, "outputs");
 const taskA = path.join(outputsRoot, "20261121-alpha");
 const taskB = path.join(outputsRoot, "20261121-beta");
@@ -261,25 +249,25 @@ add(
 );
 add(
   "A 的 final_validation.json 写入 A 任务目录",
-  path.resolve(payloadA?.validationOutputPath ?? "") === path.join(taskA, "final_validation.json") &&
+  canonical(payloadA?.validationOutputPath ?? ".") === canonical(path.join(taskA, "final_validation.json")) &&
     fs.existsSync(path.join(taskA, "final_validation.json")),
   `path=${payloadA?.validationOutputPath ?? "无"}`
 );
 add(
   "B 的 final_validation.json 写入 B 任务目录",
-  path.resolve(payloadB?.validationOutputPath ?? "") === path.join(taskB, "final_validation.json") &&
+  canonical(payloadB?.validationOutputPath ?? ".") === canonical(path.join(taskB, "final_validation.json")) &&
     fs.existsSync(path.join(taskB, "final_validation.json")),
   `path=${payloadB?.validationOutputPath ?? "无"}`
 );
 add(
   "A 的 draftPath 精确指向 A 任务目录",
-  payloadA?.draftPath === draftA && payloadA?.auditPath === auditA,
+  payloadA?.draftPath === canonical(draftA) && payloadA?.auditPath === canonical(auditA),
   `draft=${payloadA?.draftPath}`
 );
 add(
   "B 的 draftPath 精确指向 B 的 task-id 路径（不只是与 A 不同）",
-  path.resolve(root, payloadB?.draftPath ?? "__missing__") === draftB &&
-    path.resolve(root, payloadB?.auditPath ?? "__missing__") === auditB &&
+  payloadB?.draftPath === canonical(draftB) &&
+    payloadB?.auditPath === canonical(auditB) &&
     (payloadB?.draftPath ?? "").includes(path.join("20261121-beta", "final_draft.md")),
   `draft=${payloadB?.draftPath}`
 );
@@ -316,18 +304,18 @@ add(
   `预置 ${preexistingPaths.length} 个旧文件 + 1 个旧任务目录，逐项内容与 mtime 均未变`
 );
 add(
-  "每个任务目录恰好只有 6 个规定产物（无第七个文件）",
+  "每个任务目录包含 6 个必需产物且没有意外根级文件",
   [taskA, taskB].every((dir) => {
     const actual = fs.readdirSync(dir).sort();
-    return JSON.stringify(actual) === JSON.stringify([...SIX_FILES].sort());
+    return JSON.stringify(actual) === JSON.stringify([...REQUIRED_FILES].sort());
   }),
   [taskA, taskB].map((d) => `${path.basename(d)}=${fs.readdirSync(d).length}`).join(" ")
 );
 add(
   "同一任务目录重复运行验证器：仍 pass、输出仍写原 task-id 目录",
   runA2.status === 0 && payloadA2?.pass === true && payloadA2?.exitCode === 0 &&
-    path.resolve(payloadA2?.validationOutputPath ?? "") === path.join(taskA, "final_validation.json") &&
-    payloadA2?.draftPath === draftA,
+    canonical(payloadA2?.validationOutputPath ?? ".") === canonical(path.join(taskA, "final_validation.json")) &&
+    payloadA2?.draftPath === canonical(draftA),
   `exit=${runA2.status} pass=${payloadA2?.pass} 目录=20261121-alpha`
 );
 add(
