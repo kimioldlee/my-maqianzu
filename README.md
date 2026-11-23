@@ -10,7 +10,7 @@
 
 ## 📖 简介
 
-先检索《睡前消息》对同一事件或同类机制的既有观点，再用节目方法分析新事件。2047 篇 `马前卒official` 知乎回答只补充节目未充分覆盖的相似案例；该账号是节目组专用号，不自动等同于任冲昊个人原话。
+先检索《睡前消息》对同一事件或同类机制的既有观点，再用节目方法分析新事件。`马前卒official` 知乎回答只补充节目未充分覆盖的相似案例；该账号是节目组专用号，不自动等同于任冲昊个人原话。实际语料覆盖范围以 `bedtime-transcript-index.json` 和 `references/research/17-full-corpus-digest.md` 为准。
 
 文字稿目录：<https://bedtime.blog/transcripts?channel=ShuiQianXiaoXi>
 
@@ -78,10 +78,10 @@
 | `14-zhihu-answers.md` | 知乎账号边界与相似事件补充观点 |
 | `15-transcript-framework.md` | 文字稿检索规则、节目方法论与跨期观点索引 |
 | `16-coverage-matrix.md` | 合理终点定义、主题覆盖矩阵与检索回归场景 |
-| `17-full-corpus-digest.md` | 892篇文稿的离线召回摘要 |
-| `18-zhihu-official-corpus.md` | 2047篇官方账号回答的语料范围、检索和归因边界 |
+| `17-full-corpus-digest.md` | 文稿的离线召回摘要 |
+| `18-zhihu-official-corpus.md` | 官方账号回答的语料范围、检索和归因边界 |
 
-> 文字稿目录核验截至 2026 年 11 月 2 日，覆盖到第1124期。所有现实数据仍需在使用时核验。
+> 实际语料覆盖范围以 `bedtime-transcript-index.json` 和 `references/research/17-full-corpus-digest.md` 为准；所有现实数据仍需在使用时核验。
 
 ---
 
@@ -89,7 +89,7 @@
 
 ### 获取文件
 
-首次使用请获取整个仓库，而不是只打开或复制 `SKILL.md`。本技能的离线索引、892篇节目文稿摘要、节目全文、2047篇知乎回答、检索脚本和原始 HTML 备份都在仓库的附属路径中；某些平台仍可能只自动挂载 `SKILL.md` 和 `SOUL.md`，这时技能会按 `SKILL.md` 中的 Raw/在线降级规则运行。
+首次使用请获取整个仓库，而不是只打开或复制 `SKILL.md`。本技能的离线索引、文稿摘要、节目全文、知乎回答、检索脚本和原始 HTML 备份都在仓库的附属路径中；某些平台仍可能只自动挂载 `SKILL.md` 和 `SOUL.md`，这时技能会按 `SKILL.md` 中的 Raw/在线降级规则运行。
 
 ```bash
 # 方式一：git clone（推荐）
@@ -110,7 +110,7 @@ curl -LO https://github.com/kimioldlee/my-maqianzu/archive/refs/heads/main.zip
 
 ```powershell
 cd my-maqianzu
-node scripts/search_bedtime_transcripts.mjs . "事件词,机制词" 8 --context-lines 24 --max-chars 24000 --json
+node scripts/search_bedtime_transcripts.mjs . "事件词,机制词" 8 --context-lines 12 --max-chars 12000 --json
 ```
 
 它也接受 `work\BedtimeNews-Transcripts` 或 `contents\ShuiQianXiaoXi` 作为路径。先看片段和行号，再按需要回读单篇原文；只有明确使用 `--full` 时才返回候选全文。完整规则见 [`LOCAL_RETRIEVAL.md`](LOCAL_RETRIEVAL.md)。
@@ -130,19 +130,14 @@ schtasks /Run /TN "MyMaqianzu-WeeklyZhihuSync"
 
 知乎任务会在临时目录抓取新增回答、重建全文和索引、校验文件数，再替换正式语料并提交推送。登录过期、验证码或设备验证会使本次任务失败，不会提交半成品；恢复登录后重新运行即可。详细说明见 [`LOCAL_RETRIEVAL.md`](LOCAL_RETRIEVAL.md)。
 
-### 注入到 AI Agent
+### 正常使用方式（推荐）
 
-将 `SKILL.md` 全部内容作为 System Prompt 注入即可。具体方式取决于你用的 AI 工具：
+1. 以本地项目方式打开或挂载**完整项目目录**（`SKILL.md`、索引、`references/`、`scripts/`、`work/` 保持原有相对关系）。
+2. 安装并启用 `madugong-perspective` 技能后，在任务中调用该技能即可，由平台和技能加载器负责载入规则。
+3. 项目根目录的 `SKILL.md` 是规范入口，技能按其中的规则自动完成检索、成稿、Sepia 与终稿验证。
+4. **不需要在每个任务中重复粘贴完整 `SKILL.md`，也不建议手动把整份 `SKILL.md` 再注入系统提示词**；重复注入只会增加上下文和 Token 消耗，不改变规则内容。
 
-| 工具 | 注入方式 |
-|------|---------|
-| **Claude Code** | `claude.md` 或 `CLAUDE.md` 文件 |
-| **Cursor** | `.cursorrules` 或 Project Rules |
-| **Windsurf** | `.windsurfrules` |
-| **GitHub Copilot** | `.github/copilot-instructions.md` |
-| **VS Code Cline** | `.clinerules` |
-| **Hermes Agent** | `hermes skills enable madugong-perspective` |
-| **任何 LLM API** | 将 SKILL.md 内容拼入 system message |
+只需挂载 `SKILL.md` 的平台会按其中的 Raw/在线降级规则运行，但完整本地目录才是正常、低 Token 的用法。
 
 ### 快速使用
 
@@ -158,9 +153,9 @@ schtasks /Run /TN "MyMaqianzu-WeeklyZhihuSync"
 
 关于 Sepia：用户只需一次提交新闻材料和完整流程要求，Agent 就会自动连续编排 `sepia-review -> sepia-refactor -> sepia-review`，分别产出对初稿的诊断、修改后的完整正文与实际修改记录、以及对修改稿的复查记录。调用时出现的 “Launching skill”、“Loaded a skill”、“Got the result” 或 SKILL.md 加载确认只是技能加载确认，不是诊断结果，也不代表失败；加载后 Agent 必须立即继续执行三个阶段，用户不需要再次调用、逐步点击或输入 `/sepia-review`、`/sepia-refactor`。Sepia 结果是当前 Agent 依据 Sepia 技能完成的审校，不是独立第三方测评或客观认证；只有明确的技能无法加载、SKILL.md 不可读、工具报错、Agent 无法按已加载规则执行，或阶段未产出诊断/修改稿/复查记录等真正执行错误，才标记 `sepia_call_failed`。
 
-关于终稿验证：用户仍然只需提交一次新闻材料，不需要逐步调用 Sepia 或验证器。最终稿正文独立保存为 `outputs/final_draft.md`，审计数据保存为 `outputs/final_audit.json`；交付前 Agent 会运行 `node scripts/validate_final_draft.mjs outputs/final_draft.md outputs/final_audit.json --json`，并保存原始 JSON 与退出码。验证器从文件真实内容重新计算字数、破折号、节目名/期数、占位符、方案六要素正文证据和 11 项评分；评分由每项 10 个 0/1 二元检查点重算，单项分数只能是 0 至 10 的整数，综合平均分可为小数但必须由 11 项实际得分计算。只有验证器返回 `pass=true` 且退出码 0，才会标记为最终稿；验证失败时 Agent 依据 `violations` 自动修改并复检，不要求用户逐项纠错。验证器测试用例见 `tests/validate_final_draft.test.mjs`。
+关于终稿验证：用户仍然只需提交一次新闻材料，不需要逐步调用 Sepia 或验证器。最终稿正文独立保存为 `outputs/final_draft.md`，审计数据保存为 `outputs/final_audit.json`；交付前 Agent 会运行 `node scripts/validate_final_draft.mjs outputs/final_draft.md outputs/final_audit.json`，完整报告写入 `outputs/final_validation.json`；终端默认只返回精简摘要，不回注完整 JSON，需要时显式加 `--full-json`。验证器从文件真实内容重新计算字数、破折号、节目名/期数、占位符、方案六要素正文证据和 11 项评分；评分由每项 10 个 0/1 二元检查点重算，单项分数只能是 0 至 10 的整数，综合平均分可为小数但必须由 11 项实际得分计算。只有验证器返回 `pass=true` 且退出码 0，才会标记为最终稿；验证失败时 Agent 依据 `violations` 自动修改并复检，不要求用户逐项纠错。验证器测试用例见 `tests/validate_final_draft.test.mjs`。
 
-技能会优先检索“电价、能源、输配电、补贴、维护”等直接词和机制词，回读有限的相关原文，再核验当前调价文件。最终会区分节目明确观点、官方账号回应或补充、当前事实和助手推演；若某项资源未实际可读，会如实说明；若检索器正常但话题零命中，会如实记录扫描文件数与零命中事实并继续补充检索。完整流程和边界见 [`SKILL.md`](SKILL.md)。
+技能会优先检索“电价、能源、输配电、补贴、维护”等直接词和机制词，回读有限的相关原文，再核验当前调价文件。最终会区分节目明确观点、官方账号回应或补充、当前事实和助手推演；若某项资源未实际可读，会如实说明；若检索器正常但话题零命中，会如实记录扫描文件数与零命中事实并继续补充检索。故意零命中和无效目录测试只用于技能、索引或检索器更新后的回归验证，**不是每篇新闻任务的步骤**。完整流程和边界见 [`SKILL.md`](SKILL.md)。
 
 > 更多示例见 `examples/usage-examples.md`
 
@@ -174,7 +169,7 @@ madugong-perspective-skill/
 ├── SKILL.md                     # 核心检索与分析规则
 ├── SOUL.md                      # 兼容摘要
 ├── LICENSE                      # MIT
-├── bedtime-transcript-index.json # 892篇节目文稿的召回索引
+├── bedtime-transcript-index.json # 节目文稿的召回索引
 ├── references/
 │   └── research/                # 完整调研资料
 │       ├── 01-writings.md
@@ -195,8 +190,8 @@ madugong-perspective-skill/
 │       ├── 17-full-corpus-digest.md
 │       └── 18-zhihu-official-corpus.md
 ├── work/
-│   ├── BedtimeNews-Transcripts/ # 892篇节目文稿正文
-│   └── ZhihuOfficial-Answers/   # 2047篇官方账号回答与原始 HTML
+│   ├── BedtimeNews-Transcripts/ # 节目文稿正文
+│   └── ZhihuOfficial-Answers/   # 官方账号回答与原始 HTML
 ├── examples/
 │   └── usage-examples.md        # 使用示例
 ├── scripts/
@@ -215,7 +210,7 @@ madugong-perspective-skill/
 
 1. **这不是马督工本人。** 这是基于公开信息提炼的思维框架。
 2. **局限性：** 节目观点受当时资料与条件约束，框架推演不等于本人观点。
-3. **时效性：** 文字稿目录核验截至 2026 年 11 月 2 日；现实事件仍需实时核验。
+3. **时效性：** 实际语料覆盖范围以 `bedtime-transcript-index.json` 和 `references/research/17-full-corpus-digest.md` 为准；现实事件仍需实时核验。
 4. **开源：** 欢迎 Fork 和贡献，请保留 Nuwa Engine 出处。
 
 ---

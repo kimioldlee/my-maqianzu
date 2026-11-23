@@ -4,13 +4,19 @@
  * Deterministic final-draft validator for madugong-perspective.
  *
  * Usage:
- *   node scripts/validate_final_draft.mjs <final_draft.md> <final_audit.json> [--json] [--output <file>] [--no-write]
+ *   node scripts/validate_final_draft.mjs <final_draft.md> <final_audit.json>
+ *       [--json | --full-json] [--output <file>] [--no-write]
  *
  * The validator always derives every statistic from the real file contents.
  * Numbers declared inside the draft or the audit JSON are reported for
- * transparency but are NEVER trusted for gating. JSON is always printed to
- * stdout and, unless --no-write is given, also written to
- * <draft-dir>/final_validation.json (or the --output path).
+ * transparency but are NEVER trusted for gating.
+ *
+ * Terminal output is a SHORT SUMMARY by default (pass/fail, body length,
+ * average score, violation count, top violations, full-report path).
+ * The complete JSON report is still written to
+ * <draft-dir>/final_validation.json (or the --output path) unless --no-write.
+ * Pass --full-json explicitly to also print the complete JSON to stdout;
+ * --json is kept as a backwards-compatible alias for that behaviour.
  */
 
 import fs from "node:fs";
@@ -127,15 +133,17 @@ function parseArgs(argv) {
   const unknown = [];
   let output = null;
   let noWrite = false;
+  let fullJson = false;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    if (arg === "--json") continue; // JSON is always printed; flag kept for compatibility
-    if (arg === "--no-write") noWrite = true;
+    // --full-json is the explicit opt-in; --json remains a compatible alias.
+    if (arg === "--full-json" || arg === "--json") fullJson = true;
+    else if (arg === "--no-write") noWrite = true;
     else if (arg === "--output") output = argv[++i] ?? null;
     else if (arg.startsWith("--")) unknown.push(arg);
     else positionals.push(arg);
   }
-  return { draftPath: positionals[0], auditPath: positionals[1], output, noWrite, unknown };
+  return { draftPath: positionals[0], auditPath: positionals[1], output, noWrite, fullJson, unknown };
 }
 
 function matchesOf(text, regex) {
@@ -440,30 +448,73 @@ function validate(draftPath, auditPath, outputPath, violations) {
       const cp = checkpoints[i];
       let result;
       let evidence;
+      let location;
+      let quote;
       let reason;
+      const isObject = cp !== null && typeof cp === "object" && !Array.isArray(cp);
       if (typeof cp === "boolean") result = cp;
-      else if (cp && typeof cp === "object") {
+      else if (isObject) {
         result = cp.result ?? cp.pass ?? cp.value;
         if (result === 0 || result === 1) result = Boolean(result);
-        evidence = cp.evidence ?? cp.正文证据 ?? cp.证据;
-        reason = cp.reason ?? cp.失败原因 ?? cp.reasonForFailure;
+        evidence = cp.evidence ?? cp.正文证据 ?? cp.证据 ?? cp.quote ?? cp.原文引用 ?? cp.quoteText;
+        location = cp.location ?? cp.位置;
+        quote = cp.quote ?? cp.原文引用 ?? cp.quoteText ?? cp.evidence ?? cp.正文证据 ?? cp.证据;
+        reason = cp.reason ?? cp.失败原因 ?? cp.reasonForFailure ?? cp.判断依据;
       }
       if (typeof result !== "boolean") {
         violations.push(`「${dimension}」第 ${i + 1} 个检查点缺少布尔结果`);
         result = false;
       }
+
+      // Structured scoring evidence must carry location / quote / reason.
+      // A bare "第3段" style location note is NOT a quote and can never pass.
+      const structured = isObject && (typeof cp.location !== "undefined" || typeof cp.位置 !== "undefined" ||
+        typeof cp.quote !== "undefined" || typeof cp.原文引用 !== "undefined" || typeof cp.quoteText !== "undefined");
+      // A PURE location note ("第3段", "第 12 行") is not a quote. Real prose
+      // that happens to start with a location word is still a valid quote.
+      const locationOnly = (text) => {
+        const value = String(text ?? "").trim();
+        return value.length <= 20 &&
+          /^第\s*[0-9零一二三四五六七八九十百千〇两]+\s*[段句行](?:左右|附近|中)?[，。]?$/u.test(value);
+      };
+
       if (result) {
         trueCount += 1;
-        if (typeof evidence !== "string" || !evidence.trim()) {
-          violations.push(`「${dimension}」第 ${i + 1} 个检查点通过但缺少正文证据`);
-          details.push({ index: i + 1, result: true, evidence: "", evidenceInBody: false });
-        } else {
-          const inBody = body.includes(evidence);
-          const locationReference = /第\s*\d+\s*[段句行]/u.test(evidence);
-          if (!inBody && !locationReference) {
-            violations.push(`「${dimension}」第 ${i + 1} 个检查点的正文证据未出现在 final_draft.md`);
+        const quoteText = typeof quote === "string" ? quote.trim() : "";
+        const evidenceText = typeof evidence === "string" ? evidence.trim() : "";
+        const effectiveQuote = quoteText || evidenceText;
+        const missingFields = [];
+        if (structured) {
+          if (typeof location !== "string" || !location.trim()) missingFields.push("location");
+          if (!quoteText) missingFields.push("quote");
+          if (typeof reason !== "string" || !reason.trim()) missingFields.push("reason");
+          if (missingFields.length) {
+            violations.push(`「${dimension}」第 ${i + 1} 个检查点的评分证据缺少 ${missingFields.join("、")}`);
           }
-          details.push({ index: i + 1, result: true, evidence, evidenceInBody: inBody, locationReference });
+        }
+        if (!effectiveQuote) {
+          violations.push(`「${dimension}」第 ${i + 1} 个检查点通过但缺少正文证据`);
+          details.push({ index: i + 1, result: true, location: null, quote: "", reason: "", evidenceInBody: false });
+        } else {
+          const inBody = body.includes(effectiveQuote);
+          const derivedLocation = typeof location === "string" && location.trim()
+            ? location.trim()
+            : (inBody ? `第 ${lineColumn(body, body.indexOf(effectiveQuote)).line} 行` : null);
+          if (!inBody) {
+            violations.push(`「${dimension}」第 ${i + 1} 个检查点的 quote 未原样出现在 final_draft.md`);
+          }
+          if (locationOnly(effectiveQuote)) {
+            violations.push(`「${dimension}」第 ${i + 1} 个检查点只有位置说明、没有原文引用（quote）`);
+          }
+          details.push({
+            index: i + 1,
+            result: true,
+            location: derivedLocation,
+            quote: effectiveQuote,
+            reason: typeof reason === "string" ? reason.trim() : "检查点通过，证据已回读原文",
+            evidence: effectiveQuote,
+            evidenceInBody: inBody,
+          });
         }
       } else {
         if (typeof reason !== "string" || !reason.trim()) {
@@ -574,8 +625,25 @@ function validate(draftPath, auditPath, outputPath, violations) {
   };
 }
 
+// Short, fixed-shape terminal summary. Never echoes the full report or the
+// draft body. The complete JSON is always written to disk (unless --no-write).
+function summaryLines(payload, reportPath) {
+  const lines = [];
+  lines.push(`pass: ${payload.pass ? "true" : "false"}`);
+  lines.push(`正文字数: ${payload.nonWhitespaceChars ?? "n/a"}（非空白字符）`);
+  lines.push(`平均评分: ${payload.averageScore ?? "n/a"}`);
+  lines.push(`违规数量: ${Array.isArray(payload.violations) ? payload.violations.length : "n/a"}`);
+  const top = Array.isArray(payload.violations) ? payload.violations.slice(0, 5) : [];
+  if (top.length) {
+    lines.push("主要违规:");
+    for (const [index, item] of top.entries()) lines.push(`  ${index + 1}. ${item}`);
+  }
+  lines.push(`完整报告: ${reportPath ?? "未写入（--no-write）"}`);
+  return `${lines.join("\n")}\n`;
+}
+
 function main() {
-  const { draftPath, auditPath, output, noWrite, unknown } = parseArgs(process.argv.slice(2));
+  const { draftPath, auditPath, output, noWrite, fullJson, unknown } = parseArgs(process.argv.slice(2));
   const violations = [];
   for (const option of unknown) violations.push(`未知参数：${option}`);
 
@@ -610,12 +678,14 @@ function main() {
     ...result,
   };
   const json = `${JSON.stringify(payload, null, 2)}\n`;
-  process.stdout.write(json);
-  if (!noWrite && payload.validationOutputPath) {
-    const target = payload.validationOutputPath;
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.writeFileSync(target, json, "utf8");
+  const writeTarget = !noWrite && payload.validationOutputPath ? payload.validationOutputPath : null;
+  if (writeTarget) {
+    fs.mkdirSync(path.dirname(writeTarget), { recursive: true });
+    fs.writeFileSync(writeTarget, json, "utf8");
   }
+  // Terminal output is compact by default; --full-json (or legacy --json)
+  // explicitly opts into printing the complete JSON report.
+  process.stdout.write(fullJson ? json : summaryLines(payload, writeTarget));
   process.exitCode = payload.exitCode;
 }
 
