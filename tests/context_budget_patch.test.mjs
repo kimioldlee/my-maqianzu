@@ -110,8 +110,8 @@ add(
     absent(readme, "将 `SKILL.md` 全部内容作为 System Prompt 注入", "将 SKILL.md 内容拼入 system message")
 );
 add(
-  "（静态契约）README 检索示例为 12 / 12000，语料数量不写死",
-  has(readme, "--context-lines 12 --max-chars 12000", "实际语料覆盖范围以 `bedtime-transcript-index.json` 和 `references/research/17-full-corpus-digest.md` 为准") &&
+  "（静态契约）README 首轮检索预算为 3 / 6 / 4000，语料数量不写死",
+  has(readme, "3 --context-lines 6 --max-chars 4000", "实际语料覆盖范围以 `bedtime-transcript-index.json` 和 `references/research/17-full-corpus-digest.md` 为准") &&
     absent(readme, "--context-lines 24 --max-chars 24000", "892篇", "2047 篇", "覆盖到第1124期")
 );
 

@@ -106,14 +106,24 @@ curl -LO https://github.com/kimioldlee/my-maqianzu/archive/refs/heads/main.zip
 
 ### 低上下文本地检索
 
-本地语料不需要每次全部读入模型。默认使用边界检索器，只返回命中行附近的证据片段：
+本地语料不需要每次全部读入模型。首轮使用边界检索器的紧凑预算（limit 3 / 6 / 4000），只返回命中行附近的证据片段：
 
 ```powershell
 cd my-maqianzu
-node scripts/search_bedtime_transcripts.mjs . "事件词,机制词" 8 --context-lines 12 --max-chars 12000 --json
+node scripts/search_bedtime_transcripts.mjs . "事件词,机制词" 3 --context-lines 6 --max-chars 4000 --json
 ```
 
-它也接受 `work\BedtimeNews-Transcripts` 或 `contents\ShuiQianXiaoXi` 作为路径。先看片段和行号，再按需要回读单篇原文；只有明确使用 `--full` 时才返回候选全文。完整规则见 [`LOCAL_RETRIEVAL.md`](LOCAL_RETRIEVAL.md)。
+它也接受 `work\BedtimeNews-Transcripts` 或 `contents\ShuiQianXiaoXi` 作为路径。先看片段和行号，再按需要回读单篇原文；只有明确使用 `--full` 时才返回候选全文。完整规则见 [`LOCAL_RETRIEVAL.md`](LOCAL_RETRIEVAL.md)，首轮预算与轮次上限见 [`SKILL.md`](SKILL.md) 的「低上下文执行规范」。
+
+### 低上下文执行（v1）
+
+1. 正常任务**不要重复粘贴完整 `SKILL.md`**；打开完整项目目录并调用已安装的技能即可。
+2. **不要在同一个会话连续处理多篇新闻**；每篇新闻使用一个**全新会话**，避免旧稿与旧工具输出持续占用缓存上下文。
+3. 检索结果、事实核验记录和各阶段报告保存到本次任务的 `outputs/` 目录（模板见 `references/templates/evidence-pack-template.md`）。
+4. 会话中只显示阶段摘要、关键问题、文件路径和最终交付物，不回填完整稿件、完整诊断或未采用的大段片段。
+5. 长时间暂停后优先用 checkpoint 新建会话继续，不恢复超长旧上下文；checkpoint 字段见 `SKILL.md`「低上下文执行规范」。
+6. 可选只读预检：`node scripts/run_compact_preflight.mjs`，一次输出紧凑 JSON；加 `--query "事件词"` 才执行一次测试查询。
+7. 不把外部平台显示的**累计缓存 Token** 误认为最终正文的实际消耗；是否真正降低用量，需要用同一篇新闻做真实 A/B 测试。
 
 检索器默认对少量常见概念做别名扩展，例如“地方债”会关联“地方政府债务、隐性债务、城投债”。这是为冷门话题提供低成本的额外召回，不是语义模型；未知专名仍需补充同义词或改写查询。用 `--no-expand` 可关闭扩展。
 
@@ -171,6 +181,8 @@ madugong-perspective-skill/
 ├── LICENSE                      # MIT
 ├── bedtime-transcript-index.json # 节目文稿的召回索引
 ├── references/
+│   ├── templates/               # 紧凑证据包模板
+│   │   └── evidence-pack-template.md
 │   └── research/                # 完整调研资料
 │       ├── 01-writings.md
 │       ├── 02-conversations.md
@@ -198,10 +210,13 @@ madugong-perspective-skill/
 │   ├── search_bedtime_transcripts.mjs
 │   ├── search_zhihu_official_answers.mjs
 │   ├── validate_final_draft.mjs   # 终稿确定性验证器
+│   ├── run_compact_preflight.mjs  # 只读紧凑资源预检
 │   ├── zhihu/                  # 可复跑抓取、转写脚本（不含登录态）
 │   └── install.sh               # 可选安装脚本
 └── tests/
-    └── validate_final_draft.test.mjs  # 验证器测试用例/夹具
+    ├── validate_final_draft.test.mjs  # 验证器硬门用例/夹具
+    ├── context_budget_patch.test.mjs  # 超时规则与验证器输出测试
+    └── low_context_v1.test.mjs        # 低上下文执行规范测试
 ```
 
 ---
