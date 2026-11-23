@@ -32,4 +32,4 @@
 
 完整规则见 `SKILL.md`；节目索引见 `references/research/15-transcript-framework.md`；知乎补充见 `references/research/14-zhihu-answers.md` 与 `references/research/18-zhihu-official-corpus.md`。
 
-主语料是已保存的889篇节目文字稿；另有2029篇 `马前卒official` 知乎回答作为二级补充。在线入口用于更新和校验，不是唯一依赖。如果激活环境没有挂载原文，先读取发布包中的 `references/research/17-full-corpus-digest.md`；只有离线摘要、本地原文和在线入口都不可用时，才使用本摘要中的方法框架并披露没有执行全文检索。不得把资源未挂载误报为语料为空，也不得声称读过未实际读取的节目或知乎正文。
+主语料是《睡前消息》文字稿，`马前卒official` 知乎回答作为二级补充；本摘要不写死节目和知乎文件数量。实际语料覆盖范围以 `bedtime-transcript-index.json`、`references/research/17-full-corpus-digest.md` 和 `work/ZhihuOfficial-Answers/zhihu-official-answer-index.json` 为准。在线入口用于更新和校验，不是唯一依赖。如果激活环境没有挂载原文，先读取项目中的 `references/research/17-full-corpus-digest.md`；只有离线摘要、本地原文和在线入口都不可用时，才使用本摘要中的方法框架并披露没有执行全文检索。不得把资源未挂载误报为语料为空，也不得声称读过未实际读取的节目或知乎正文。

@@ -211,8 +211,7 @@ madugong-perspective-skill/
 │   ├── search_zhihu_official_answers.mjs
 │   ├── validate_final_draft.mjs   # 终稿确定性验证器
 │   ├── run_compact_preflight.mjs  # 只读紧凑资源预检
-│   ├── zhihu/                  # 可复跑抓取、转写脚本（不含登录态）
-│   └── install.sh               # 可选安装脚本
+│   └── zhihu/                  # 可复跑抓取、转写脚本（不含登录态）
 └── tests/
     ├── validate_final_draft.test.mjs  # 验证器硬门用例/夹具
     ├── context_budget_patch.test.mjs  # 超时规则与验证器输出测试
