@@ -75,6 +75,58 @@ add(
     "三阶段 Sepia 仍必须由同一 Agent 自动连续执行", "不得拆给不同 Agent")
 );
 
+// 2b. Task routing: quick analysis mode vs full-draft mode.
+// These are document/static-contract assertions: mode selection is Agent
+// session behaviour, not something the validator or retriever can execute.
+add(
+  "（静态契约）默认路由：未明确成稿走快速分析模式，明确成稿才走完整成稿模式",
+  has(skill, "## 任务分流：快速分析模式 / 完整成稿模式",
+    "用户**没有明确要求成稿**时，默认进入**快速分析模式**",
+    "用户**明确要求成稿**时，进入**完整成稿模式**",
+    "触发条件（任一即可）：用户要求「完成初稿」「生成口播稿」「完整流程」「最终稿」或「3000 至 5000 字文章」")
+);
+add(
+  "（静态契约）快速分析模式不强制触发 Sepia / 评分 / 方案六要素 / 字数 / 审计与验证 JSON",
+  has(skill, "不强制执行（这些是成稿交付物，不是分析模式的前提）：3000 至 5000 字正文、三阶段 Sepia、11 项评分、方案六要素、`final_audit.json`、`final_validation.json`",
+    "只执行：", "本地低 Token 检索（首轮 3 / 6 / 4000）", "来源归因和简短分析",
+    "也不得把快速模式的回答称为「最终稿」")
+);
+add(
+  "（静态契约）快速分析模式不绕过来源归因、事实核验与语料失败判定",
+  has(skill, "不得因此跳过来源归因、事实核验、`corpus_failed` 判定或 `direct_hit_count=0` 的补充检索",
+    "两种模式都不得放宽来源归因、事实核验、`corpus_failed` 技术失败边界与 `direct_hit_count=0` 继续补充检索规则",
+    "`corpus_failed`：只用于技术性失败", "零命中绝不单独触发",
+    "快速分析模式参照步骤 1 至 4 中适用的预检、检索、核验和归因规则；步骤 5 至 7 仅在完整成稿模式执行")
+);
+add(
+  "（静态契约）普通分析的交付要求归入快速分析模式，步骤 7 不再要求快速模式执行",
+  has(skill, "普通分析直接给判断、节目证据、当前事实、机制、异议视角和归因标签；这是快速分析模式的交付形式，不执行步骤 7 的交叉核验与交付流程") &&
+    (() => {
+      const section = skill.indexOf("### 快速分析模式");
+      const step7 = skill.indexOf("### 7. 交叉核验与交付");
+      const sentence = skill.indexOf("普通分析直接给判断");
+      return section >= 0 && step7 > section && sentence > section && sentence < step7;
+    })() &&
+    absent(
+      skill.slice(skill.indexOf("### 7. 交叉核验与交付")),
+      "普通分析直接给判断"
+    )
+);
+add(
+  "（静态契约）完整成稿模式仍保留全部硬门、七步流程、最终验证器与失败标签",
+  has(skill, "### 完整成稿模式",
+    "必须保留：自动七步流程、来源排序与归因、三阶段 Sepia（同一 Agent 自动连续执行）、v3.19 硬门、11 项可审计评分、方案六要素、最终验证器与失败标签",
+    "终稿路径（`outputs/final_draft.md`、`outputs/final_audit.json`、`outputs/final_validation.json`）与验证器行为不变") &&
+    has(skill, ...gates)
+);
+add(
+  "（静态契约）分流不重复粘贴 v3.19 全文，不改动终稿路径、验证器行为与 3 / 6 / 4000 预算",
+  has(skill, "本节不重复粘贴 `马前卒指令集v3.19.md` 全文", "不新增流程阶段，不改变检索器参数与终稿验证器行为",
+    "低上下文首轮预算仍为 `limit 3 / --context-lines 6 / --max-chars 4000`",
+    "node scripts/validate_final_draft.mjs outputs/final_draft.md outputs/final_audit.json") &&
+    absent(skill, "只有用户明确说“只要分析”或“只要检索结果”时才跳过成稿硬门")
+);
+
 // 3. Compact preflight: no full text, no directory listing, only 9 fields.
 const preflightNoQuery = spawnSync(process.execPath, [PREFLIGHT], {
   cwd: REPO, encoding: "utf8", maxBuffer: 2 * 1024 * 1024, timeout: 120_000,
