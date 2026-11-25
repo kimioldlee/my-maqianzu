@@ -127,6 +127,28 @@ add(
     absent(skill, "只有用户明确说“只要分析”或“只要检索结果”时才跳过成稿硬门")
 );
 
+add(
+  "（静态契约）已决定成稿时直接进入完整流程，不强制额外快速分析",
+  has(skill, "### 同一新闻的分析与成稿衔接", "已确定要成稿：直接进入完整成稿模式",
+    "不先交付一次快速分析", "内部判断不是新增交付物") &&
+    has(readme, "已经决定写稿时直接要求完整成稿", "不要先单独交付快速分析")
+);
+add(
+  "（静态契约）分析后成稿仅复用已核验的同一事件证据，时效事实须补查",
+  has(skill, "只有确认新闻主体与事件相同、来源仍可读且原文一致时才能复用",
+    "政策、数字、后续进展或有争议的时效性事实必须按成稿时点补查",
+    "不能假定新会话保留了旧会话上下文或检索结果",
+    "不把分析全文或工具输出重新注入上下文") &&
+    has(skill, "若用户表示同一新闻可能继续成稿", "没有实际回读或核验的内容不得记为已采用证据") &&
+    has(readme, "换会话时还需指明可访问的证据包路径") &&
+    has(skill, ...gates)
+);
+add(
+  "（静态契约）README 的默认模式与 SKILL.md 一致",
+  has(readme, "未明确要求成稿时默认只做快速分析") &&
+    absent(readme, "若没有明确说“只要分析”或“只要检索结果”")
+);
+
 // 3. Compact preflight: no full text, no directory listing, only 9 fields.
 const preflightNoQuery = spawnSync(process.execPath, [PREFLIGHT], {
   cwd: REPO, encoding: "utf8", maxBuffer: 2 * 1024 * 1024, timeout: 120_000,
